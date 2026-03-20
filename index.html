@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Školní teploměr</title>
+  <style>
+    :root {
+      --cold: #3b82f6;
+      --cold-bg: #eff6ff;
+      --warm: #f97316;
+      --warm-bg: #fff7ed;
+      --neutral: #64748b;
+      --neutral-bg: #f8fafc;
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
+    header p.subtitle { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+
+    #location-info {
+      font-size: 0.85rem; color: #475569; margin-top: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    #location-info .pin { font-size: 1rem; }
+
+    .date-badge {
+      background: #1e293b; color: #fff; font-size: 0.8rem; font-weight: 600;
+      border-radius: 50px; padding: 4px 14px; margin-top: 10px;
+      display: inline-block; letter-spacing: 0.3px;
+    }
+
+    /* Cards */
+    .cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 420px; }
+
+    .card {
+      border-radius: var(--radius); padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: transform 0.15s; position: relative; overflow: hidden;
+    }
+    .card:active { transform: scale(0.98); }
+    .card::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 100px; height: 100px; border-radius: 50%; opacity: 0.12;
+    }
+    .card.cold    { background: var(--cold-bg);    border-left: 5px solid var(--cold); }
+    .card.warm    { background: var(--warm-bg);    border-left: 5px solid var(--warm); }
+    .card.neutral { background: var(--neutral-bg); border-left: 5px solid var(--neutral); }
+    .card.cold::before    { background: var(--cold); }
+    .card.warm::before    { background: var(--warm); }
+    .card.neutral::before { background: var(--neutral); }
+
+    .card-main { display: flex; align-items: center; justify-content: space-between; }
+    .card-left  { display: flex; flex-direction: column; gap: 3px; }
+
+    .card-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .card.cold   .card-label { color: var(--cold); }
+    .card.warm   .card-label { color: var(--warm); }
+    .card.neutral .card-label { color: var(--neutral); }
+
+    .card-time   { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .card-desc   { font-size: 0.8rem; color: #64748b; }
+    .card-wx     { font-size: 0.8rem; font-weight: 500; color: #475569; margin-top: 1px; }
+
+    .card-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+    .card-emoji  { font-size: 2.5rem; line-height: 1; }
+    .card-temp   { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .card.cold   .card-temp { color: var(--cold); }
+    .card.warm   .card-temp { color: var(--warm); }
+    .card.neutral .card-temp { color: var(--neutral); }
+    .card-feels  { font-size: 0.73rem; color: #94a3b8; }
+
+    /* Clothing chips */
+    .card-clothing {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .chip {
+      font-size: 0.75rem; padding: 3px 9px; border-radius: 50px;
+      font-weight: 500; white-space: nowrap;
+    }
+    .card.cold   .chip { background: #dbeafe; color: #1d4ed8; }
+    .card.warm   .chip { background: #ffedd5; color: #c2410c; }
+    .card.neutral .chip { background: #e2e8f0; color: #475569; }
+
+    /* Day tabs */
+    .day-tabs {
+      display: none; margin-top: 14px;
+      background: rgba(255,255,255,0.6); border-radius: 50px;
+      padding: 4px; gap: 4px;
+    }
+    .day-tabs.visible { display: flex; }
+    .tab-btn {
+      border: none; border-radius: 50px; padding: 7px 22px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      color: #64748b; background: transparent;
+    }
+    .tab-btn.active {
+      background: #1e293b; color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .tab-date {
+      font-size: 0.7rem; font-weight: 400; opacity: 0.7;
+      display: block; margin-top: 1px;
+    }
+
+    /* Loading & error */
+    .status { text-align: center; padding: 40px 20px; color: #64748b; }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e2e8f0;
+      border-top-color: #3b82f6; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px;
+      padding: 16px 20px; color: #b91c1c; font-size: 0.9rem;
+      max-width: 420px; width: 100%; text-align: center;
+    }
+
+    /* Tip banner */
+    .tip-banner {
+      margin-top: 20px; max-width: 420px; width: 100%; background: white;
+      border-radius: 14px; padding: 14px 18px; font-size: 0.83rem; color: #475569;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-left: 4px solid #a78bfa; display: none;
+    }
+    .tip-banner strong { color: #1e293b; }
+
+    /* Buttons row */
+    .btn-row {
+      display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center;
+    }
+    .icon-btn {
+      background: white; border: 1.5px solid #e2e8f0; border-radius: 50px;
+      padding: 8px 18px; font-size: 0.82rem; font-weight: 600; color: #475569;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: background 0.15s;
+    }
+    .icon-btn:hover { background: #f8fafc; }
+
+    /* City form */
+    #city-edit-btn {
+      background: none; border: none; cursor: pointer; font-size: 0.85rem;
+      color: #94a3b8; padding: 2px 4px; border-radius: 6px; transition: color 0.15s; line-height: 1;
+    }
+    #city-edit-btn:hover { color: #3b82f6; }
+
+    #city-form {
+      display: none; margin-top: 10px; width: 100%; max-width: 320px;
+      flex-direction: row; gap: 6px; align-items: center; justify-content: center;
+    }
+    #city-form.open { display: flex; }
+    #city-input {
+      flex: 1; border: 1.5px solid #cbd5e1; border-radius: 50px; padding: 7px 14px;
+      font-size: 0.9rem; outline: none; color: #1e293b; background: white; transition: border-color 0.15s;
+    }
+    #city-input:focus { border-color: #3b82f6; }
+    #city-input::placeholder { color: #94a3b8; }
+    #city-submit {
+      background: #3b82f6; color: white; border: none; border-radius: 50px;
+      padding: 7px 16px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      white-space: nowrap; transition: background 0.15s;
+    }
+    #city-submit:hover { background: #2563eb; }
+    #city-cancel {
+      background: none; border: none; font-size: 1.1rem; cursor: pointer;
+      color: #94a3b8; padding: 4px; transition: color 0.15s;
+    }
+    #city-cancel:hover { color: #ef4444; }
+    #city-error { font-size: 0.78rem; color: #ef4444; margin-top: 4px; display: none; }
+
+    /* Settings modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 24px; padding: 28px 24px; width: 90%;
+      max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: pop-in 0.18s ease;
+    }
+    @keyframes pop-in { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 18px; }
+    .time-row {
+      display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;
+    }
+    .time-field { display: flex; align-items: center; gap: 10px; }
+    .time-field label { font-size: 0.88rem; font-weight: 600; color: #475569; min-width: 90px; }
+    .time-field input[type=number] {
+      width: 70px; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 7px 10px;
+      font-size: 1rem; font-weight: 700; color: #1e293b; text-align: center; outline: none;
+      transition: border-color 0.15s;
+    }
+    .time-field input[type=number]:focus { border-color: #3b82f6; }
+    .time-field span { font-size: 0.82rem; color: #94a3b8; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-primary {
+      background: #3b82f6; color: white; border: none; border-radius: 10px;
+      padding: 9px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary {
+      background: #f1f5f9; color: #475569; border: none; border-radius: 10px;
+      padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .modal-error { font-size: 0.78rem; color: #ef4444; margin-top: -8px; margin-bottom: 4px; display: none; }
+
+    footer { margin-top: 32px; font-size: 0.75rem; color: #94a3b8; text-align: center; }
+    footer a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏫 Školní teploměr</h1>
+  <p class="subtitle">Teplota pro cestu do školy a ze školy</p>
+  <div id="location-info">
+    <span class="pin">📍</span>
+    <span id="loc-text">Načítám polohu…</span>
+    <button id="city-edit-btn" title="Změnit město" onclick="toggleCityForm()">✏️</button>
+  </div>
+  <form id="city-form" onsubmit="submitCity(event)">
+    <input id="city-input" type="text" placeholder="Název města…" autocomplete="off" />
+    <button type="submit" id="city-submit">Hledat</button>
+    <button type="button" id="city-cancel" title="Zrušit" onclick="toggleCityForm(false)">✕</button>
+  </form>
+  <div id="city-error">Město nenalezeno, zkuste jiný název.</div>
+  <div class="date-badge" id="date-badge">—</div>
+  <div class="day-tabs" id="day-tabs">
+    <button class="tab-btn active" id="tab-today"    onclick="switchTab('today')">
+      Dnes<span class="tab-date" id="tab-today-date"></span>
+    </button>
+    <button class="tab-btn"        id="tab-tomorrow" onclick="switchTab('tomorrow')">
+      Zítra<span class="tab-date" id="tab-tomorrow-date"></span>
+    </button>
+  </div>
+</header>
+
+<div id="app">
+  <div class="status">
+    <div class="spinner"></div>
+    Načítám předpověď počasí…
+  </div>
+</div>
+
+<div class="btn-row">
+  <button class="icon-btn" id="refresh-btn" style="display:none" onclick="init()">🔄 Aktualizovat</button>
+  <button class="icon-btn" id="settings-btn" style="display:none" onclick="openSettings()">⚙️ Časy</button>
+</div>
+
+<div class="tip-banner" id="tip-banner"></div>
+
+<footer>
+  Data: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> &bull; Aktualizováno: <span id="updated-at">—</span>
+</footer>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settings-modal" onclick="closeSettingsOnBg(event)">
+  <div class="modal">
+    <h2>⏰ Nastavit časy</h2>
+    <div class="time-row">
+      <div class="time-field">
+        <label>🌅 Ráno</label>
+        <input type="number" id="t-morning" min="0" max="23" />
+        <span>:00 hod.</span>
+      </div>
+      <div class="time-field">
+        <label>☀️ Poledne</label>
+        <input type="number" id="t-noon" min="0" max="23" />
+        <span>:00 hod.</span>
+      </div>
+      <div class="time-field">
+        <label>🌆 Odpoledne</label>
+        <input type="number" id="t-afternoon" min="0" max="23" />
+        <span>:00 hod.</span>
+      </div>
+    </div>
+    <div class="modal-error" id="settings-error">Hodiny musí být 0–23 a v rostoucím pořadí.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeSettings()">Zrušit</button>
+      <button class="btn-primary" onclick="saveTimes()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Slot config ──────────────────────────────────────────────
+const LS_KEY = 'skolni-teplomer-times';
+const DEFAULT_HOURS = [8, 12, 16];
+const SLOT_META = [
+  { label: 'Ráno',      desc: 'Cesta DO školy'  },
+  { label: 'Poledne',   desc: 'Přestávka'        },
+  { label: 'Odpoledne', desc: 'Cesta ZE školy'   },
+];
+
+function loadHours() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY));
+    if (Array.isArray(s) && s.length === 3 && s.every(h => Number.isInteger(h) && h >= 0 && h <= 23))
+      return s;
+  } catch {}
+  return [...DEFAULT_HOURS];
+}
+
+function getSlots() {
+  const hours = loadHours();
+  return SLOT_META.map((m, i) => ({ ...m, hour: hours[i] }));
+}
+
+// ─── Weather decode ───────────────────────────────────────────
+function decodeWeather(code) {
+  if (code === 0)                          return { emoji: '☀️',   text: 'Jasno' };
+  if (code === 1)                          return { emoji: '🌤️',   text: 'Převážně jasno' };
+  if (code === 2)                          return { emoji: '⛅',   text: 'Polojasno' };
+  if (code === 3)                          return { emoji: '☁️',   text: 'Zataženo' };
+  if ([45,48].includes(code))              return { emoji: '🌫️',   text: 'Mlha' };
+  if ([51,53,55].includes(code))           return { emoji: '🌦️',   text: 'Mrholení' };
+  if ([56,57].includes(code))              return { emoji: '🌧️❄️', text: 'Mrznoucí déšť' };
+  if ([61,63,65].includes(code))           return { emoji: '🌧️',   text: 'Déšť' };
+  if ([66,67].includes(code))              return { emoji: '🌧️❄️', text: 'Mrznoucí déšť' };
+  if ([71,73,75,77].includes(code))        return { emoji: '❄️',   text: 'Sněžení' };
+  if ([80,81,82].includes(code))           return { emoji: '🌧️',   text: 'Přeháňky' };
+  if ([85,86].includes(code))              return { emoji: '🌨️',   text: 'Sněhové přeháňky' };
+  if (code === 95)                         return { emoji: '⛈️',   text: 'Bouřka' };
+  if ([96,99].includes(code))              return { emoji: '⛈️',   text: 'Bouřka s krupobitím' };
+  return { emoji: '🌡️', text: 'Neznámo' };
+}
+
+// ─── Clothing recommendations ─────────────────────────────────
+function getClothing(temp, feels, code) {
+  const items = [];
+  const isRain   = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code);
+  const isSnow   = [71,73,75,77,85,86].includes(code);
+
+  if (feels <= -10) {
+    items.push('🧥 Zimní bunda', '🎿 Čepice', '🧤 Rukavice', '🧣 Šála');
+  } else if (feels <= -3) {
+    items.push('🧥 Zimní bunda', '🎿 Čepice', '🧤 Rukavice');
+  } else if (feels <= 3) {
+    items.push('🧥 Teplá bunda', '🎿 Čepice');
+  } else if (feels <= 9) {
+    items.push('🧥 Bunda');
+  } else if (feels <= 14) {
+    items.push('🧥 Lehká bunda');
+  } else if (feels <= 19) {
+    items.push('👕 Mikina');
+  } else if (feels <= 26) {
+    items.push('👕 Tričko');
+  } else {
+    items.push('🩴 Lehké oblečení');
+  }
+
+  if (isSnow && feels > -3)   items.push('🎿 Čepice', '🧤 Rukavice');
+  if (isRain)                 items.push('🌂 Deštník');
+
+  return [...new Set(items)];
+}
+
+// ─── Color class ─────────────────────────────────────────────
+function colorClass(temp) {
+  if (temp <= 5)  return 'cold';
+  if (temp >= 18) return 'warm';
+  return 'neutral';
+}
+
+// ─── Date helpers ─────────────────────────────────────────────
+function dateStr(d) {
+  // Use local time (not UTC) to match Open-Meteo Prague timezone output
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// ─── Tip ──────────────────────────────────────────────────────
+function getTip(slots) {
+  const hasRain = slots.some(s => [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(s.code));
+  const hasSnow = slots.some(s => [71,73,75,77,85,86].includes(s.code));
+  const tempDiff = Math.abs(slots[0].temp - slots[2].temp);
+  const tips = [];
+  if (hasRain)        tips.push('🌂 Vezměte s sebou deštník');
+  if (hasSnow)        tips.push('🧤 Nezapomeňte rukavice a čepici');
+  if (slots[0].temp <= 0)       tips.push('🧥 Mráz! Oblečte dítě do teplé bundy');
+  if (tempDiff >= 7)  tips.push(`🌡️ Rozdíl ${Math.round(tempDiff)}°C během dne – přibalte bundu do batohu`);
+  if (slots[0].temp <= 5 && slots[2].temp >= 14) tips.push('👕 Ráno chladné, odpoledne teplejší – mikina do batohu');
+  return tips[0] || null;
+}
+
+// ─── Location / geocoding ─────────────────────────────────────
+let manualLocation = null;
+
+function toggleCityForm(forceOpen) {
+  const form = document.getElementById('city-form');
+  const err  = document.getElementById('city-error');
+  const open = forceOpen !== undefined ? forceOpen : !form.classList.contains('open');
+  form.classList.toggle('open', open);
+  err.style.display = 'none';
+  if (open) document.getElementById('city-input').focus();
+}
+
+async function geocodeCity(name) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=cs&format=json`;
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!d.results?.length) return null;
+  const { latitude, longitude, name: cn, country } = d.results[0];
+  return { lat: latitude, lon: longitude, name: `${cn}, ${country}` };
+}
+
+async function submitCity(e) {
+  e.preventDefault();
+  const val = document.getElementById('city-input').value.trim();
+  if (!val) return;
+  const btn = document.getElementById('city-submit');
+  const err = document.getElementById('city-error');
+  btn.textContent = '…'; btn.disabled = true; err.style.display = 'none';
+  const loc = await geocodeCity(val);
+  btn.textContent = 'Hledat'; btn.disabled = false;
+  if (!loc) { err.style.display = 'block'; return; }
+  manualLocation = loc;
+  toggleCityForm(false);
+  document.getElementById('city-input').value = '';
+  init();
+}
+
+async function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve({ lat: 50.0755, lon: 14.4378, name: 'Praha' }); return; }
+    navigator.geolocation.getCurrentPosition(
+      p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, name: null }),
+      ()  => resolve({ lat: 50.0755, lon: 14.4378, name: 'Praha' }),
+      { timeout: 6000 }
+    );
+  });
+}
+
+async function reverseGeocode(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`, { headers: { 'Accept-Language': 'cs' } });
+    const d = await r.json();
+    return d.address?.city || d.address?.town || d.address?.village || d.address?.county || null;
+  } catch { return null; }
+}
+
+// ─── Weather API (2 days) ─────────────────────────────────────
+async function fetchWeather(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast`
+    + `?latitude=${lat}&longitude=${lon}`
+    + `&hourly=temperature_2m,apparent_temperature,weathercode`
+    + `&timezone=Europe%2FPrague&forecast_days=2`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Chyba API: ' + r.status);
+  return r.json();
+}
+
+function extractSlots(data, dayStr) {
+  const slots  = getSlots();
+  const times  = data.hourly.time;
+  const temps  = data.hourly.temperature_2m;
+  const feels  = data.hourly.apparent_temperature;
+  const codes  = data.hourly.weathercode;
+  return slots.map(slot => {
+    const target = `${dayStr}T${String(slot.hour).padStart(2,'0')}:00`;
+    const idx = times.indexOf(target);
+    if (idx === -1) throw new Error(`Čas ${target} nenalezen v datech`);
+    return { ...slot, temp: Math.round(temps[idx]), feels: Math.round(feels[idx]), code: codes[idx], weather: decodeWeather(codes[idx]) };
+  });
+}
+
+// ─── Render ───────────────────────────────────────────────────
+let cachedToday    = null;
+let cachedTomorrow = null;
+let activeTab      = 'today';
+
+function makeCard(slot) {
+  const cls = colorClass(slot.temp);
+  const clothing = getClothing(slot.temp, slot.feels, slot.code);
+  const card = document.createElement('div');
+  card.className = `card ${cls}`;
+  const sign = n => n > 0 ? '+' : '';
+  card.innerHTML = `
+    <div class="card-main">
+      <div class="card-left">
+        <div class="card-label">${slot.label}</div>
+        <div class="card-time">${String(slot.hour).padStart(2,'0')}:00</div>
+        <div class="card-desc">${slot.desc}</div>
+        <div class="card-wx">${slot.weather.text}</div>
+      </div>
+      <div class="card-right">
+        <div class="card-emoji">${slot.weather.emoji}</div>
+        <div class="card-temp">${sign(slot.temp)}${slot.temp}°</div>
+        <div class="card-feels">Pocitově ${sign(slot.feels)}${slot.feels}°C</div>
+      </div>
+    </div>
+    <div class="card-clothing">
+      ${clothing.map(c => `<span class="chip">${c}</span>`).join('')}
+    </div>
+  `;
+  return card;
+}
+
+function renderTab() {
+  const slots = activeTab === 'today' ? cachedToday : cachedTomorrow;
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const cards = document.createElement('div');
+  cards.className = 'cards';
+  slots.forEach(s => cards.appendChild(makeCard(s)));
+  app.appendChild(cards);
+
+  // Tip only for today
+  const banner = document.getElementById('tip-banner');
+  if (activeTab === 'today') {
+    const tip = getTip(slots);
+    if (tip) { banner.style.display = 'block'; banner.innerHTML = `<strong>Tip na dnes:</strong> ${tip}`; return; }
+  }
+  banner.style.display = 'none';
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-today').classList.toggle('active',    tab === 'today');
+  document.getElementById('tab-tomorrow').classList.toggle('active', tab === 'tomorrow');
+  renderTab();
+}
+
+function render(todaySlots, tomorrowSlots, locationName) {
+  cachedToday    = todaySlots;
+  cachedTomorrow = tomorrowSlots;
+
+  // Populate tab date labels
+  const today    = new Date();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const fmt = d => d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
+  document.getElementById('tab-today-date').textContent    = fmt(today);
+  document.getElementById('tab-tomorrow-date').textContent = fmt(tomorrow);
+  document.getElementById('day-tabs').classList.add('visible');
+
+  renderTab();
+
+  document.getElementById('refresh-btn').style.display = 'flex';
+  document.getElementById('settings-btn').style.display = 'flex';
+  document.getElementById('loc-text').textContent = locationName || 'Vaše poloha';
+  document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Settings modal ───────────────────────────────────────────
+function openSettings() {
+  const hours = loadHours();
+  document.getElementById('t-morning').value   = hours[0];
+  document.getElementById('t-noon').value      = hours[1];
+  document.getElementById('t-afternoon').value = hours[2];
+  document.getElementById('settings-error').style.display = 'none';
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function closeSettingsOnBg(e) {
+  if (e.target === document.getElementById('settings-modal')) closeSettings();
+}
+
+function saveTimes() {
+  const vals = [
+    parseInt(document.getElementById('t-morning').value,   10),
+    parseInt(document.getElementById('t-noon').value,      10),
+    parseInt(document.getElementById('t-afternoon').value, 10),
+  ];
+  const err = document.getElementById('settings-error');
+  const valid = vals.every(v => Number.isInteger(v) && v >= 0 && v <= 23)
+    && vals[0] < vals[1] && vals[1] < vals[2];
+  if (!valid) { err.style.display = 'block'; return; }
+  localStorage.setItem(LS_KEY, JSON.stringify(vals));
+  closeSettings();
+  init();
+}
+
+// ─── Main ─────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('app').innerHTML = `<div class="status"><div class="spinner"></div>Načítám předpověď počasí…</div>`;
+  document.getElementById('tip-banner').style.display = 'none';
+  document.getElementById('refresh-btn').style.display = 'none';
+  document.getElementById('settings-btn').style.display = 'none';
+  document.getElementById('date-badge').textContent = formatDate(new Date());
+
+  try {
+    let loc, cityName;
+    if (manualLocation) {
+      loc = manualLocation; cityName = loc.name;
+    } else {
+      loc = await getLocation();
+      document.getElementById('loc-text').textContent = 'Zjišťuji polohu…';
+      cityName = loc.name || await reverseGeocode(loc.lat, loc.lon);
+    }
+
+    const data = await fetchWeather(loc.lat, loc.lon);
+
+    const today    = new Date();
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+
+    const todaySlots    = extractSlots(data, dateStr(today));
+    const tomorrowSlots = extractSlots(data, dateStr(tomorrow));
+
+    render(todaySlots, tomorrowSlots, cityName);
+  } catch (err) {
+    document.getElementById('app').innerHTML = `
+      <div class="error-box">
+        ⚠️ Nepodařilo se načíst počasí.<br>
+        <small>${err.message}</small><br><br>
+        <button class="icon-btn" style="margin:0 auto" onclick="init()">🔄 Zkusit znovu</button>
+      </div>`;
+    console.error(err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
