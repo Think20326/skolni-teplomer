@@ -4,433 +4,620 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Školní teploměr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cold: #3b82f6;
-      --cold-bg: #eff6ff;
-      --warm: #f97316;
-      --warm-bg: #fff7ed;
-      --neutral: #64748b;
-      --neutral-bg: #f8fafc;
-      --radius: 20px;
+      --bg-a:#dbeafe; --bg-b:#f0fdf4; --bg-c:#ede9fe;
+      --card:rgba(255,255,255,0.62);
+      --card-border:rgba(255,255,255,0.5);
+      --card-shadow:0 4px 24px rgba(30,58,138,.07),0 1px 3px rgba(0,0,0,.04);
+      --glass:rgba(255,255,255,0.55);
+      --glass-border:rgba(255,255,255,0.45);
+      --text:#1e293b; --text2:#475569; --text3:#94a3b8;
+      --primary:#3b82f6;
+      --cold:#3b82f6; --warm:#f97316; --neutral:#64748b;
+      --divider:rgba(0,0,0,.06);
+      --chip-bg:rgba(0,0,0,.05); --chip-border:rgba(0,0,0,.07); --chip-text:#475569;
+      --input-bg:rgba(255,255,255,.8); --input-border:#e2e8f0;
+      --modal-bg:rgba(255,255,255,.95);
+      --blob1:rgba(191,219,254,.75); --blob2:rgba(167,243,208,.6); --blob3:rgba(233,213,255,.6);
+      --r:18px;
+    }
+    .dark {
+      --bg-a:#0f172a; --bg-b:#1e1b4b; --bg-c:#0f172a;
+      --card:rgba(30,27,75,.52);
+      --card-border:rgba(255,255,255,.07);
+      --card-shadow:0 4px 24px rgba(0,0,0,.35),0 1px 3px rgba(0,0,0,.2);
+      --glass:rgba(15,23,42,.55);
+      --glass-border:rgba(255,255,255,.07);
+      --text:#f1f5f9; --text2:#94a3b8; --text3:#475569;
+      --primary:#60a5fa;
+      --cold:#60a5fa; --warm:#fb923c; --neutral:#94a3b8;
+      --divider:rgba(255,255,255,.06);
+      --chip-bg:rgba(255,255,255,.08); --chip-border:rgba(255,255,255,.1); --chip-text:#cbd5e1;
+      --input-bg:rgba(255,255,255,.06); --input-border:rgba(255,255,255,.1);
+      --modal-bg:rgba(15,23,42,.97);
+      --blob1:rgba(30,58,138,.32); --blob2:rgba(49,46,129,.26); --blob3:rgba(88,28,135,.18);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 16px 40px;
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:linear-gradient(135deg,var(--bg-a) 0%,var(--bg-b) 50%,var(--bg-c) 100%);
+      background-attachment:fixed;
+      min-height:100vh; color:var(--text);
+      display:flex; flex-direction:column; align-items:center;
+      overflow-x:hidden; position:relative;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
+    /* Blobs */
+    .blob{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0}
+    .b1{width:400px;height:400px;background:var(--blob1);top:-120px;left:-120px}
+    .b2{width:320px;height:320px;background:var(--blob2);top:40%;right:-100px}
+    .b3{width:280px;height:280px;background:var(--blob3);bottom:5%;left:0}
 
-    header h1 { font-size: 1.6rem; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
-    header p.subtitle { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+    .wrap{width:100%;max-width:480px;padding:0 16px 56px;position:relative;z-index:1}
 
-    #location-info {
-      font-size: 0.85rem; color: #475569; margin-top: 6px;
-      display: flex; align-items: center; justify-content: center; gap: 5px;
+    /* ── Header ────────────────────────────────────── */
+    .hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 0 0}
+    .hdr-left{display:flex;flex-direction:column;gap:4px}
+    .loc-row{
+      display:flex;align-items:center;gap:5px;cursor:pointer;
+      font-size:.82rem;font-weight:500;color:var(--text2);transition:opacity .15s;
     }
-    #location-info .pin { font-size: 1rem; }
-
-    .date-badge {
-      background: #1e293b; color: #fff; font-size: 0.8rem; font-weight: 600;
-      border-radius: 50px; padding: 4px 14px; margin-top: 10px;
-      display: inline-block; letter-spacing: 0.3px;
+    .loc-row:hover{opacity:.7}
+    .loc-row svg{flex-shrink:0;color:var(--text2)}
+    .city-name{font-size:.82rem;font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .edit-btn{background:none;border:none;cursor:pointer;padding:1px;color:var(--text3);display:flex;align-items:center;transition:color .15s}
+    .edit-btn:hover{color:var(--primary)}
+    .hdr-date{font-size:1.45rem;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.15;padding-top:2px}
+    .hdr-right{display:flex;align-items:center;gap:8px;padding-top:6px}
+    .icn{
+      width:38px;height:38px;border-radius:50%;
+      background:var(--glass);border:1px solid var(--glass-border);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:var(--text);transition:transform .12s,background .15s;
     }
-
-    /* Cards */
-    .cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 420px; }
-
-    .card {
-      border-radius: var(--radius); padding: 18px 20px;
-      display: flex; flex-direction: column; gap: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      transition: transform 0.15s; position: relative; overflow: hidden;
-    }
-    .card:active { transform: scale(0.98); }
-    .card::before {
-      content: ''; position: absolute; top: -30px; right: -30px;
-      width: 100px; height: 100px; border-radius: 50%; opacity: 0.12;
-    }
-    .card.cold    { background: var(--cold-bg);    border-left: 5px solid var(--cold); }
-    .card.warm    { background: var(--warm-bg);    border-left: 5px solid var(--warm); }
-    .card.neutral { background: var(--neutral-bg); border-left: 5px solid var(--neutral); }
-    .card.cold::before    { background: var(--cold); }
-    .card.warm::before    { background: var(--warm); }
-    .card.neutral::before { background: var(--neutral); }
-
-    .card-main { display: flex; align-items: center; justify-content: space-between; }
-    .card-left  { display: flex; flex-direction: column; gap: 3px; }
-
-    .card-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    .card.cold   .card-label { color: var(--cold); }
-    .card.warm   .card-label { color: var(--warm); }
-    .card.neutral .card-label { color: var(--neutral); }
-
-    .card-time   { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
-    .card-desc   { font-size: 0.8rem; color: #64748b; }
-    .card-wx     { font-size: 0.8rem; font-weight: 500; color: #475569; margin-top: 1px; }
-
-    .card-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
-    .card-emoji  { font-size: 2.5rem; line-height: 1; }
-    .card-temp   { font-size: 2.2rem; font-weight: 900; line-height: 1; }
-    .card.cold   .card-temp { color: var(--cold); }
-    .card.warm   .card-temp { color: var(--warm); }
-    .card.neutral .card-temp { color: var(--neutral); }
-    .card-feels  { font-size: 0.73rem; color: #94a3b8; }
-
-    /* Clothing chips */
-    .card-clothing {
-      display: flex; flex-wrap: wrap; gap: 5px;
-      padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    .chip {
-      font-size: 0.75rem; padding: 3px 9px; border-radius: 50px;
-      font-weight: 500; white-space: nowrap;
-    }
-    .card.cold   .chip { background: #dbeafe; color: #1d4ed8; }
-    .card.warm   .chip { background: #ffedd5; color: #c2410c; }
-    .card.neutral .chip { background: #e2e8f0; color: #475569; }
-
-    /* Day tabs */
-    .day-tabs {
-      display: none; margin-top: 14px;
-      background: rgba(255,255,255,0.6); border-radius: 50px;
-      padding: 4px; gap: 4px;
-    }
-    .day-tabs.visible { display: flex; }
-    .tab-btn {
-      border: none; border-radius: 50px; padding: 7px 22px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-      color: #64748b; background: transparent;
-    }
-    .tab-btn.active {
-      background: #1e293b; color: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-    }
-    .tab-date {
-      font-size: 0.7rem; font-weight: 400; opacity: 0.7;
-      display: block; margin-top: 1px;
-    }
-
-    /* Loading & error */
-    .status { text-align: center; padding: 40px 20px; color: #64748b; }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid #e2e8f0;
-      border-top-color: #3b82f6; border-radius: 50%;
-      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .error-box {
-      background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px;
-      padding: 16px 20px; color: #b91c1c; font-size: 0.9rem;
-      max-width: 420px; width: 100%; text-align: center;
-    }
-
-    /* Tip banner */
-    .tip-banner {
-      margin-top: 20px; max-width: 420px; width: 100%; background: white;
-      border-radius: 14px; padding: 14px 18px; font-size: 0.83rem; color: #475569;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-left: 4px solid #a78bfa; display: none;
-    }
-    .tip-banner strong { color: #1e293b; }
-
-    /* Buttons row */
-    .btn-row {
-      display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center;
-    }
-    .icon-btn {
-      background: white; border: 1.5px solid #e2e8f0; border-radius: 50px;
-      padding: 8px 18px; font-size: 0.82rem; font-weight: 600; color: #475569;
-      cursor: pointer; display: flex; align-items: center; gap: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: background 0.15s;
-    }
-    .icon-btn:hover { background: #f8fafc; }
+    .icn:hover{transform:scale(1.07);background:var(--card)}
+    .icn:active{transform:scale(0.93)}
 
     /* City form */
-    #city-edit-btn {
-      background: none; border: none; cursor: pointer; font-size: 0.85rem;
-      color: #94a3b8; padding: 2px 4px; border-radius: 6px; transition: color 0.15s; line-height: 1;
+    #city-form{display:none;padding:10px 0 6px;flex-direction:row;gap:6px;align-items:center}
+    #city-form.open{display:flex}
+    #city-input{
+      flex:1;border:1.5px solid var(--input-border);border-radius:50px;
+      padding:8px 14px;font-size:.88rem;font-family:inherit;outline:none;
+      color:var(--text);background:var(--input-bg);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      transition:border-color .15s;
     }
-    #city-edit-btn:hover { color: #3b82f6; }
+    #city-input:focus{border-color:var(--primary)}
+    #city-input::placeholder{color:var(--text3)}
+    #city-submit{
+      background:var(--primary);color:#fff;border:none;border-radius:50px;
+      padding:8px 16px;font-size:.82rem;font-weight:600;font-family:inherit;
+      cursor:pointer;white-space:nowrap;transition:opacity .15s;
+    }
+    #city-submit:hover{opacity:.88}
+    #city-cancel{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text3);padding:4px;transition:color .15s}
+    #city-cancel:hover{color:#ef4444}
+    #city-error{font-size:.74rem;color:#ef4444;padding-bottom:6px;display:none}
 
-    #city-form {
-      display: none; margin-top: 10px; width: 100%; max-width: 320px;
-      flex-direction: row; gap: 6px; align-items: center; justify-content: center;
-    }
-    #city-form.open { display: flex; }
-    #city-input {
-      flex: 1; border: 1.5px solid #cbd5e1; border-radius: 50px; padding: 7px 14px;
-      font-size: 0.9rem; outline: none; color: #1e293b; background: white; transition: border-color 0.15s;
-    }
-    #city-input:focus { border-color: #3b82f6; }
-    #city-input::placeholder { color: #94a3b8; }
-    #city-submit {
-      background: #3b82f6; color: white; border: none; border-radius: 50px;
-      padding: 7px 16px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      white-space: nowrap; transition: background 0.15s;
-    }
-    #city-submit:hover { background: #2563eb; }
-    #city-cancel {
-      background: none; border: none; font-size: 1.1rem; cursor: pointer;
-      color: #94a3b8; padding: 4px; transition: color 0.15s;
-    }
-    #city-cancel:hover { color: #ef4444; }
-    #city-error { font-size: 0.78rem; color: #ef4444; margin-top: 4px; display: none; }
+    /* Date row */
+    .date-row{padding:14px 0 16px}
 
-    /* Settings modal */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5);
-      z-index: 100; align-items: center; justify-content: center;
+    /* Tabs */
+    .day-tabs{
+      display:none;margin-bottom:16px;
+      background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid var(--card-border);border-radius:16px;padding:4px;gap:4px;
     }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: white; border-radius: 24px; padding: 28px 24px; width: 90%;
-      max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      animation: pop-in 0.18s ease;
+    .day-tabs.visible{display:flex}
+    .tab-btn{
+      flex:1;border:none;border-radius:12px;padding:9px 8px;
+      font-size:.86rem;font-weight:600;font-family:inherit;cursor:pointer;
+      color:var(--text2);background:transparent;
+      transition:background .2s,color .2s,box-shadow .2s;
     }
-    @keyframes pop-in { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal h2 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 18px; }
-    .time-row {
-      display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;
-    }
-    .time-field { display: flex; align-items: center; gap: 10px; }
-    .time-field label { font-size: 0.88rem; font-weight: 600; color: #475569; min-width: 90px; }
-    .time-field input[type=number] {
-      width: 70px; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 7px 10px;
-      font-size: 1rem; font-weight: 700; color: #1e293b; text-align: center; outline: none;
-      transition: border-color 0.15s;
-    }
-    .time-field input[type=number]:focus { border-color: #3b82f6; }
-    .time-field span { font-size: 0.82rem; color: #94a3b8; }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-primary {
-      background: #3b82f6; color: white; border: none; border-radius: 10px;
-      padding: 9px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
-    }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-secondary {
-      background: #f1f5f9; color: #475569; border: none; border-radius: 10px;
-      padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
-    }
-    .btn-secondary:hover { background: #e2e8f0; }
-    .modal-error { font-size: 0.78rem; color: #ef4444; margin-top: -8px; margin-bottom: 4px; display: none; }
+    .tab-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+    .dark .tab-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.3)}
+    .tab-inner{display:flex;flex-direction:column;align-items:center;gap:1px}
+    .tab-label{font-size:.86rem;font-weight:600}
+    .tab-date{font-size:.66rem;font-weight:400;opacity:.6}
 
-    footer { margin-top: 32px; font-size: 0.75rem; color: #94a3b8; text-align: center; }
-    footer a { color: #94a3b8; }
+    /* ── Cards ──────────────────────────────────────── */
+    .cards{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+    .card{
+      border-radius:var(--r);padding:18px 20px;
+      background:var(--card);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid var(--card-border);
+      box-shadow:var(--card-shadow);
+      transition:transform .15s;
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;gap:12px;
+    }
+    .card:active{transform:scale(.99)}
+    .card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+    .card::before{content:'';position:absolute;top:-20px;right:-20px;width:90px;height:90px;border-radius:50%;opacity:.1;pointer-events:none}
+    .card.cold::after{background:var(--cold)} .card.cold::before{background:var(--cold)}
+    .card.warm::after{background:var(--warm)} .card.warm::before{background:var(--warm)}
+    .card.neutral::after{background:var(--neutral)} .card.neutral::before{background:var(--neutral)}
+    .card.active-slot.cold{box-shadow:var(--card-shadow),0 0 0 2px rgba(59,130,246,.2);border-color:rgba(59,130,246,.3)}
+    .card.active-slot.warm{box-shadow:var(--card-shadow),0 0 0 2px rgba(249,115,22,.2);border-color:rgba(249,115,22,.3)}
+    .card.active-slot.neutral{box-shadow:var(--card-shadow),0 0 0 2px rgba(100,116,139,.2);border-color:rgba(100,116,139,.3)}
+
+    /* Card header row */
+    .card-hdr{display:flex;align-items:flex-start;justify-content:space-between}
+    .card-meta{display:flex;flex-direction:column;gap:2px}
+    .card-lbl{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px}
+    .card.cold .card-lbl{color:var(--cold)} .card.warm .card-lbl{color:var(--warm)} .card.neutral .card-lbl{color:var(--neutral)}
+    .card-time{font-size:1.05rem;font-weight:700;color:var(--text)}
+    .card-desc{font-size:.76rem;color:var(--text2)}
+    .card-wx-text{font-size:.76rem;color:var(--text2);margin-top:1px}
+    .wx-icon{width:56px;height:56px;flex-shrink:0}
+
+    /* Temp row */
+    .card-temp-row{display:flex;align-items:center;justify-content:space-between;margin-top:-4px}
+    .card-temp{font-size:2.2rem;font-weight:900;line-height:1}
+    .card.cold .card-temp{color:var(--cold)} .card.warm .card-temp{color:var(--warm)} .card.neutral .card-temp{color:var(--neutral)}
+    .card-feels{font-size:.7rem;color:var(--text3);margin-top:2px}
+
+    /* Clothing */
+    .card-clothing{display:flex;flex-direction:column;gap:7px;padding-top:12px;border-top:1px solid var(--divider)}
+    .clothing-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text3)}
+    .chips{display:flex;flex-wrap:wrap;gap:5px}
+    .chip{
+      font-size:.72rem;font-weight:500;font-family:inherit;
+      padding:4px 10px;border-radius:50px;white-space:nowrap;
+      background:var(--chip-bg);color:var(--chip-text);border:1px solid var(--chip-border);
+    }
+    .chip-wind{background:rgba(6,182,212,.1)!important;color:#0891b2!important;border-color:rgba(6,182,212,.2)!important}
+    .chip-rain{background:rgba(59,130,246,.1)!important;color:#2563eb!important;border-color:rgba(59,130,246,.2)!important}
+    .chip-uv{background:rgba(234,179,8,.1)!important;color:#a16207!important;border-color:rgba(234,179,8,.2)!important}
+    .dark .chip-wind{background:rgba(6,182,212,.15)!important;color:#22d3ee!important}
+    .dark .chip-rain{background:rgba(59,130,246,.15)!important;color:#60a5fa!important}
+    .dark .chip-uv{background:rgba(234,179,8,.15)!important;color:#fbbf24!important}
+
+    /* ── Glass panel ────────────────────────────────── */
+    .panel{
+      background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid var(--card-border);border-radius:var(--r);
+      box-shadow:var(--card-shadow);padding:18px 20px;margin-bottom:12px;
+    }
+    .panel-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text3);margin-bottom:14px}
+
+    /* ── Air quality ────────────────────────────────── */
+    #air-section{display:none}
+    .aqi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .aqi-left{display:flex;align-items:baseline;gap:8px}
+    .aqi-num{font-size:2.1rem;font-weight:800;line-height:1}
+    .aqi-word{font-size:.9rem;font-weight:600}
+    .aqi-desc{font-size:.75rem;color:var(--text2);margin-bottom:10px}
+    .aqi-icn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+    .aqi-track{height:5px;background:var(--divider);border-radius:50px;overflow:hidden;margin-bottom:3px}
+    .aqi-fill{height:100%;border-radius:50px;transition:width .6s ease}
+    .aqi-scale{display:flex;justify-content:space-between}
+    .aqi-scale span{font-size:.58rem;color:var(--text3)}
+    .aqi-great{--ac:#16a34a} .aqi-good{--ac:#ca8a04} .aqi-ok{--ac:#ea580c} .aqi-bad{--ac:#dc2626}
+    .aqi-num,.aqi-word{color:var(--ac)} .aqi-fill{background:var(--ac)}
+    .aqi-icn{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+    .aqi-icn svg{color:var(--ac)}
+
+    .pollen-row{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}
+    .pollen-chip{font-size:.7rem;padding:3px 10px;border-radius:50px;font-weight:500;background:rgba(22,163,74,.09);color:#15803d;border:1px solid rgba(22,163,74,.15)}
+    .pollen-chip.hi{background:rgba(202,138,4,.09);color:#a16207;border-color:rgba(202,138,4,.15)}
+    .dark .pollen-chip{background:rgba(22,163,74,.14);color:#4ade80}
+    .dark .pollen-chip.hi{background:rgba(202,138,4,.14);color:#fbbf24}
+    .sport-chip{display:inline-block;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:50px;border:1px solid transparent}
+    .s-ok{background:rgba(22,163,74,.09);color:#15803d;border-color:rgba(22,163,74,.2)}
+    .s-cau{background:rgba(202,138,4,.09);color:#a16207;border-color:rgba(202,138,4,.2)}
+    .s-no{background:rgba(220,38,38,.08);color:#dc2626;border-color:rgba(220,38,38,.18)}
+    .dark .s-ok{background:rgba(22,163,74,.14);color:#4ade80}
+    .dark .s-cau{background:rgba(202,138,4,.14);color:#fbbf24}
+    .dark .s-no{background:rgba(220,38,38,.14);color:#f87171}
+
+    /* ── Tips ────────────────────────────────────────── */
+    #tip-section{display:none}
+    .tip-list{display:flex;flex-direction:column}
+    .tip-item{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--divider)}
+    .tip-item:last-child{border-bottom:none;padding-bottom:0}
+    .tip-badge{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .tip-text{font-size:.82rem;color:var(--text2);line-height:1.5;padding-top:7px}
+
+    /* Loading */
+    .status{text-align:center;padding:56px 0;color:var(--text2);font-size:.9rem}
+    .spinner{width:36px;height:36px;border:3px solid var(--divider);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.15);border-radius:14px;padding:20px;color:#ef4444;font-size:.86rem;text-align:center;line-height:1.5}
+    .retry-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:var(--card);border:1px solid var(--card-border);border-radius:50px;padding:7px 16px;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+    /* ── Modal ───────────────────────────────────────── */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:16px}
+    .overlay.open{display:flex}
+    .modal{
+      background:var(--modal-bg);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border:1px solid var(--card-border);border-radius:24px;
+      padding:28px 24px;width:100%;max-width:360px;
+      box-shadow:0 20px 60px rgba(0,0,0,.2);
+      animation:pop .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:22px}
+    .t-rows{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+    .t-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .t-row label{font-size:.85rem;font-weight:600;color:var(--text2)}
+    .t-row input[type=time]{
+      border:1.5px solid var(--input-border);border-radius:10px;
+      padding:8px 12px;font-size:.95rem;font-weight:600;font-family:inherit;
+      color:var(--text);background:var(--input-bg);outline:none;
+      transition:border-color .15s;min-width:110px;
+    }
+    .t-row input[type=time]:focus{border-color:var(--primary)}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+    .btn-p{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:9px 20px;font-size:.87rem;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s}
+    .btn-p:hover{opacity:.88}
+    .btn-s{background:transparent;color:var(--text2);border:1px solid var(--divider);border-radius:10px;padding:9px 16px;font-size:.87rem;font-weight:600;font-family:inherit;cursor:pointer}
+    .modal-err{font-size:.74rem;color:#ef4444;margin-bottom:4px;display:none}
+
+    footer{margin-top:20px;font-size:.7rem;color:var(--text3);text-align:center}
+    footer a{color:var(--text3)}
   </style>
 </head>
 <body>
 
-<header>
-  <h1>🏫 Školní teploměr</h1>
-  <p class="subtitle">Teplota pro cestu do školy a ze školy</p>
-  <div id="location-info">
-    <span class="pin">📍</span>
-    <span id="loc-text">Načítám polohu…</span>
-    <button id="city-edit-btn" title="Změnit město" onclick="toggleCityForm()">✏️</button>
-  </div>
+<!-- SVG gradient defs for weather icons -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-sun" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FF9F43"/></linearGradient>
+    <linearGradient id="g-cloud-w" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8F4FF"/><stop offset="100%" stop-color="#C4D7F2"/></linearGradient>
+    <linearGradient id="g-cloud-r" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#DAEEFF"/><stop offset="100%" stop-color="#A5B9D6"/></linearGradient>
+    <linearGradient id="g-drop" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60A5FA"/><stop offset="100%" stop-color="#3B82F6"/></linearGradient>
+    <linearGradient id="g-cloud-d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#94A3B8"/><stop offset="100%" stop-color="#64748B"/></linearGradient>
+    <linearGradient id="g-bolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FCD34D"/><stop offset="100%" stop-color="#F59E0B"/></linearGradient>
+    <linearGradient id="g-snow-c" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F1F5F9"/><stop offset="100%" stop-color="#CBD5E1"/></linearGradient>
+    <filter id="f-shadow"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.12)"/></filter>
+  </defs>
+</svg>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="loc-row" onclick="toggleCityForm()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="city-name" id="loc-text">Načítám…</span>
+        <button class="edit-btn" onclick="event.stopPropagation();toggleCityForm()" title="Změnit město" aria-label="Změnit město">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
+        </button>
+      </div>
+      <div class="hdr-date" id="date-badge">—</div>
+    </div>
+    <div class="hdr-right">
+      <button class="icn" id="settings-btn" title="Nastavit časy" style="display:none" onclick="openSettings()" aria-label="Nastavit časy">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+      <button class="icn" id="theme-btn" title="Přepnout motiv" onclick="toggleTheme()" aria-label="Přepnout motiv">
+        <svg id="ico-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg id="ico-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </header>
+
   <form id="city-form" onsubmit="submitCity(event)">
-    <input id="city-input" type="text" placeholder="Název města…" autocomplete="off" />
+    <input id="city-input" type="text" placeholder="Název města…" autocomplete="off"/>
     <button type="submit" id="city-submit">Hledat</button>
-    <button type="button" id="city-cancel" title="Zrušit" onclick="toggleCityForm(false)">✕</button>
+    <button type="button" id="city-cancel" onclick="toggleCityForm(false)">✕</button>
   </form>
   <div id="city-error">Město nenalezeno, zkuste jiný název.</div>
-  <div class="date-badge" id="date-badge">—</div>
-  <div class="day-tabs" id="day-tabs">
-    <button class="tab-btn active" id="tab-today"    onclick="switchTab('today')">
-      Dnes<span class="tab-date" id="tab-today-date"></span>
-    </button>
-    <button class="tab-btn"        id="tab-tomorrow" onclick="switchTab('tomorrow')">
-      Zítra<span class="tab-date" id="tab-tomorrow-date"></span>
-    </button>
+
+  <div class="date-row">
+    <div class="day-tabs" id="day-tabs">
+      <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">
+        <div class="tab-inner"><span class="tab-label">Dnes</span><span class="tab-date" id="tab-today-date"></span></div>
+      </button>
+      <button class="tab-btn" id="tab-tomorrow" onclick="switchTab('tomorrow')">
+        <div class="tab-inner"><span class="tab-label">Zítra</span><span class="tab-date" id="tab-tomorrow-date"></span></div>
+      </button>
+    </div>
   </div>
-</header>
 
-<div id="app">
-  <div class="status">
-    <div class="spinner"></div>
-    Načítám předpověď počasí…
-  </div>
+  <div id="app"><div class="status"><div class="spinner"></div>Načítám předpověď počasí…</div></div>
+
+  <div id="air-section"></div>
+  <div id="tip-section"></div>
+
+  <footer>Data: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> &bull; Aktualizováno: <span id="updated-at">—</span></footer>
 </div>
-
-<div class="btn-row">
-  <button class="icon-btn" id="refresh-btn" style="display:none" onclick="init()">🔄 Aktualizovat</button>
-  <button class="icon-btn" id="settings-btn" style="display:none" onclick="openSettings()">⚙️ Časy</button>
-</div>
-
-<div class="tip-banner" id="tip-banner"></div>
-
-<footer>
-  Data: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> &bull; Aktualizováno: <span id="updated-at">—</span>
-</footer>
 
 <!-- Settings modal -->
-<div class="modal-overlay" id="settings-modal" onclick="closeSettingsOnBg(event)">
+<div class="overlay" id="settings-modal" onclick="closeSettingsOnBg(event)">
   <div class="modal">
-    <h2>⏰ Nastavit časy</h2>
-    <div class="time-row">
-      <div class="time-field">
-        <label>🌅 Ráno</label>
-        <input type="number" id="t-morning" min="0" max="23" />
-        <span>:00 hod.</span>
-      </div>
-      <div class="time-field">
-        <label>☀️ Poledne</label>
-        <input type="number" id="t-noon" min="0" max="23" />
-        <span>:00 hod.</span>
-      </div>
-      <div class="time-field">
-        <label>🌆 Odpoledne</label>
-        <input type="number" id="t-afternoon" min="0" max="23" />
-        <span>:00 hod.</span>
-      </div>
+    <div class="modal-title">⏰ Nastavit časy</div>
+    <div class="t-rows">
+      <div class="t-row"><label>🌅 Ráno</label><input type="time" id="t-morning"/></div>
+      <div class="t-row"><label>☀️ Poledne</label><input type="time" id="t-noon"/></div>
+      <div class="t-row"><label>🌆 Odpoledne</label><input type="time" id="t-afternoon"/></div>
     </div>
-    <div class="modal-error" id="settings-error">Hodiny musí být 0–23 a v rostoucím pořadí.</div>
+    <div class="modal-err" id="settings-error">Časy musí být v rostoucím pořadí.</div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeSettings()">Zrušit</button>
-      <button class="btn-primary" onclick="saveTimes()">Uložit</button>
+      <button class="btn-s" onclick="closeSettings()">Zrušit</button>
+      <button class="btn-p" onclick="saveTimes()">Uložit</button>
     </div>
   </div>
 </div>
 
 <script>
+// ─── Theme ────────────────────────────────────────────────────
+const THEME_KEY = 'st-theme';
+function applyTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  document.getElementById('ico-moon').style.display = dark ? 'none' : '';
+  document.getElementById('ico-sun').style.display  = dark ? '' : 'none';
+}
+function toggleTheme() {
+  const d = !document.documentElement.classList.contains('dark');
+  localStorage.setItem(THEME_KEY, d ? 'dark' : 'light');
+  applyTheme(d);
+}
+(function(){
+  const s = localStorage.getItem(THEME_KEY);
+  applyTheme(s ? s === 'dark' : window.matchMedia('(prefers-color-scheme:dark)').matches);
+})();
+
 // ─── Slot config ──────────────────────────────────────────────
-const LS_KEY = 'skolni-teplomer-times';
-const DEFAULT_HOURS = [8, 12, 16];
+const LS_KEY = 'skolni-teplomer-v3';
+const DEF_TIMES = ['08:00','12:00','16:00'];
 const SLOT_META = [
-  { label: 'Ráno',      desc: 'Cesta DO školy'  },
-  { label: 'Poledne',   desc: 'Přestávka'        },
-  { label: 'Odpoledne', desc: 'Cesta ZE školy'   },
+  { label:'Ráno',      desc:'Cesta DO školy' },
+  { label:'Poledne',   desc:'Přestávka'       },
+  { label:'Odpoledne', desc:'Cesta ZE školy'  },
 ];
 
-function loadHours() {
+function loadTimes() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
-    if (Array.isArray(s) && s.length === 3 && s.every(h => Number.isInteger(h) && h >= 0 && h <= 23))
-      return s;
+    if (Array.isArray(s) && s.length === 3 && s.every(t => /^\d{2}:\d{2}$/.test(t))) return s;
   } catch {}
-  return [...DEFAULT_HOURS];
+  return [...DEF_TIMES];
+}
+
+function timeToHour(t) {
+  const [h, m] = t.split(':').map(Number);
+  return m >= 30 ? Math.min(h + 1, 23) : h;
 }
 
 function getSlots() {
-  const hours = loadHours();
-  return SLOT_META.map((m, i) => ({ ...m, hour: hours[i] }));
+  const times = loadTimes();
+  return SLOT_META.map((m, i) => ({ ...m, time: times[i], hour: timeToHour(times[i]) }));
+}
+
+// ─── Current slot index (today only) ─────────────────────────
+function getCurrentSlotIndex(slots) {
+  const now = new Date().getHours() * 60 + new Date().getMinutes();
+  let idx = -1;
+  slots.forEach((s, i) => {
+    const [h, m] = s.time.split(':').map(Number);
+    if (now >= h * 60 + m) idx = i;
+  });
+  return idx;
 }
 
 // ─── Weather decode ───────────────────────────────────────────
 function decodeWeather(code) {
-  if (code === 0)                          return { emoji: '☀️',   text: 'Jasno' };
-  if (code === 1)                          return { emoji: '🌤️',   text: 'Převážně jasno' };
-  if (code === 2)                          return { emoji: '⛅',   text: 'Polojasno' };
-  if (code === 3)                          return { emoji: '☁️',   text: 'Zataženo' };
-  if ([45,48].includes(code))              return { emoji: '🌫️',   text: 'Mlha' };
-  if ([51,53,55].includes(code))           return { emoji: '🌦️',   text: 'Mrholení' };
-  if ([56,57].includes(code))              return { emoji: '🌧️❄️', text: 'Mrznoucí déšť' };
-  if ([61,63,65].includes(code))           return { emoji: '🌧️',   text: 'Déšť' };
-  if ([66,67].includes(code))              return { emoji: '🌧️❄️', text: 'Mrznoucí déšť' };
-  if ([71,73,75,77].includes(code))        return { emoji: '❄️',   text: 'Sněžení' };
-  if ([80,81,82].includes(code))           return { emoji: '🌧️',   text: 'Přeháňky' };
-  if ([85,86].includes(code))              return { emoji: '🌨️',   text: 'Sněhové přeháňky' };
-  if (code === 95)                         return { emoji: '⛈️',   text: 'Bouřka' };
-  if ([96,99].includes(code))              return { emoji: '⛈️',   text: 'Bouřka s krupobitím' };
-  return { emoji: '🌡️', text: 'Neznámo' };
+  if (code === 0)                         return 'sunny';
+  if ([1,2].includes(code))               return 'partly-cloudy';
+  if (code === 3)                         return 'cloudy';
+  if ([45,48].includes(code))             return 'foggy';
+  if ([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return 'rainy';
+  if ([71,73,75,77,85,86].includes(code)) return 'snowy';
+  if ([95,96,99].includes(code))          return 'storm';
+  return 'cloudy';
 }
 
-// ─── Clothing recommendations ─────────────────────────────────
+function weatherText(code) {
+  if (code===0)                          return 'Jasno';
+  if (code===1)                          return 'Převážně jasno';
+  if (code===2)                          return 'Polojasno';
+  if (code===3)                          return 'Zataženo';
+  if ([45,48].includes(code))            return 'Mlha';
+  if ([51,53,55].includes(code))         return 'Mrholení';
+  if ([56,57].includes(code))            return 'Mrznoucí déšť';
+  if ([61,63,65].includes(code))         return 'Déšť';
+  if ([66,67].includes(code))            return 'Mrznoucí déšť';
+  if ([71,73,75,77].includes(code))      return 'Sněžení';
+  if ([80,81,82].includes(code))         return 'Přeháňky';
+  if ([85,86].includes(code))            return 'Sněhové přeháňky';
+  if (code===95)                         return 'Bouřka';
+  if ([96,99].includes(code))            return 'Bouřka s krupobitím';
+  return 'Neznámo';
+}
+
+// ─── SVG weather icons ────────────────────────────────────────
+function wxSvg(type) {
+  const svgs = {
+    'sunny': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="12" fill="url(#g-sun)"/>
+      <g stroke="url(#g-sun)" stroke-width="3" stroke-linecap="round">
+        <line x1="32" y1="7" x2="32" y2="14"/><line x1="32" y1="50" x2="32" y2="57"/>
+        <line x1="7" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="57" y2="32"/>
+        <line x1="14.1" y1="14.1" x2="19" y2="19"/><line x1="45" y1="45" x2="49.9" y2="49.9"/>
+        <line x1="14.1" y1="49.9" x2="19" y2="45"/><line x1="45" y1="19" x2="49.9" y2="14.1"/>
+      </g>
+    </svg>`,
+    'partly-cloudy': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="20" cy="20" r="10" fill="url(#g-sun)"/>
+      <g stroke="#FFD93D" stroke-width="2.2" stroke-linecap="round">
+        <line x1="20" y1="5" x2="20" y2="9"/><line x1="6" y1="20" x2="10" y2="20"/>
+        <line x1="9.8" y1="9.8" x2="12.7" y2="12.7"/><line x1="27.3" y1="9.8" x2="24.4" y2="12.7"/>
+      </g>
+      <path d="M50 42a9 9 0 00-9-9 9 9 0 00-8 5A7 7 0 0026 44.5 7 7 0 0033 52h17a8 8 0 000-16 8 8 0 00-.5.5z" fill="url(#g-cloud-w)" filter="url(#f-shadow)"/>
+    </svg>`,
+    'cloudy': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M50 38a11 11 0 00-11-11 11 11 0 00-9.9 6.1A8 8 0 0020 40.8 8 8 0 0028 50h22a10 10 0 000-20 10 10 0 00-.5.5z" fill="url(#g-cloud-w)" filter="url(#f-shadow)"/>
+    </svg>`,
+    'foggy': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <g stroke="#94A3B8" stroke-width="3" stroke-linecap="round">
+        <line x1="10" y1="22" x2="54" y2="22"/><line x1="16" y1="30" x2="48" y2="30"/>
+        <line x1="12" y1="38" x2="52" y2="38"/><line x1="18" y1="46" x2="46" y2="46"/>
+      </g>
+    </svg>`,
+    'rainy': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M48 32a9 9 0 00-9-9 9 9 0 00-8 5A7 7 0 0024 34.5 7 7 0 0031 42h17a8 8 0 000-16 8 8 0 00-.5.5z" fill="url(#g-cloud-r)" filter="url(#f-shadow)"/>
+      <g stroke="url(#g-drop)" stroke-width="2.5" stroke-linecap="round">
+        <line x1="27" y1="48" x2="25" y2="55"/><line x1="34" y1="50" x2="32" y2="57"/><line x1="41" y1="48" x2="39" y2="55"/>
+      </g>
+    </svg>`,
+    'snowy': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M48 32a9 9 0 00-9-9 9 9 0 00-8 5A7 7 0 0024 34.5 7 7 0 0031 42h17a8 8 0 000-16 8 8 0 00-.5.5z" fill="url(#g-snow-c)" filter="url(#f-shadow)"/>
+      <circle cx="27" cy="52" r="2.5" fill="#B0C4DE"/><circle cx="34" cy="56" r="2.5" fill="#B0C4DE"/>
+      <circle cx="41" cy="52" r="2.5" fill="#B0C4DE"/><circle cx="31" cy="48" r="2" fill="#CBD5E1"/>
+      <circle cx="38" cy="50" r="2" fill="#CBD5E1"/>
+    </svg>`,
+    'storm': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M48 28a9 9 0 00-9-9 9 9 0 00-8 5A7 7 0 0024 30.5 7 7 0 0031 38h17a8 8 0 000-16 8 8 0 00-.5.5z" fill="url(#g-cloud-d)" filter="url(#f-shadow)"/>
+      <path d="M35 40l-3 9h5l-3 9 9-14h-5l3-9z" fill="url(#g-bolt)"/>
+    </svg>`,
+  };
+  return svgs[type] || svgs['cloudy'];
+}
+
+// ─── Clothing (no emoji) ──────────────────────────────────────
 function getClothing(temp, feels, code) {
   const items = [];
-  const isRain   = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code);
-  const isSnow   = [71,73,75,77,85,86].includes(code);
+  const isRain = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code);
+  const isSnow = [71,73,75,77,85,86].includes(code);
 
-  if (feels <= -10) {
-    items.push('🧥 Zimní bunda', '🎿 Čepice', '🧤 Rukavice', '🧣 Šála');
-  } else if (feels <= -3) {
-    items.push('🧥 Zimní bunda', '🎿 Čepice', '🧤 Rukavice');
-  } else if (feels <= 3) {
-    items.push('🧥 Teplá bunda', '🎿 Čepice');
-  } else if (feels <= 9) {
-    items.push('🧥 Bunda');
-  } else if (feels <= 14) {
-    items.push('🧥 Lehká bunda');
-  } else if (feels <= 19) {
-    items.push('👕 Mikina');
-  } else if (feels <= 26) {
-    items.push('👕 Tričko');
-  } else {
-    items.push('🩴 Lehké oblečení');
-  }
+  if      (feels <= -10) items.push('Zimní bunda','Čepice','Rukavice','Šála');
+  else if (feels <=  -3) items.push('Zimní bunda','Čepice','Rukavice');
+  else if (feels <=   3) items.push('Teplá bunda','Čepice');
+  else if (feels <=   9) items.push('Bunda');
+  else if (feels <=  14) items.push('Lehká bunda');
+  else if (feels <=  19) items.push('Mikina');
+  else if (feels <=  26) items.push('Tričko');
+  else                   items.push('Lehké oblečení');
 
-  if (isSnow && feels > -3)   items.push('🎿 Čepice', '🧤 Rukavice');
-  if (isRain)                 items.push('🌂 Deštník');
-
+  if (isSnow && feels > -3) { items.push('Čepice'); items.push('Rukavice'); }
+  if (isRain) items.push('Deštník');
   return [...new Set(items)];
 }
 
-// ─── Color class ─────────────────────────────────────────────
 function colorClass(temp) {
-  if (temp <= 5)  return 'cold';
+  if (temp <= 5) return 'cold';
   if (temp >= 18) return 'warm';
   return 'neutral';
 }
 
 // ─── Date helpers ─────────────────────────────────────────────
 function dateStr(d) {
-  // Use local time (not UTC) to match Open-Meteo Prague timezone output
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
 function formatDate(d) {
-  return d.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+  return d.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'long' });
 }
 
-// ─── Tip ──────────────────────────────────────────────────────
-function getTip(slots) {
-  const hasRain = slots.some(s => [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(s.code));
-  const hasSnow = slots.some(s => [71,73,75,77,85,86].includes(s.code));
-  const tempDiff = Math.abs(slots[0].temp - slots[2].temp);
+// ─── Tips ─────────────────────────────────────────────────────
+const TIP_ICONS = {
+  frost:  { bg:'#dbeafe', c:'#2563eb', path:'<line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>' },
+  cold:   { bg:'#e0f2fe', c:'#0284c7', path:'<path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/>' },
+  temp:   { bg:'#ffedd5', c:'#ea580c', path:'<path d="M12 2v10m0 0a4 4 0 100 8 4 4 0 000-8z" stroke-width="1.5"/><line x1="16" y1="6" x2="20" y2="6"/><line x1="16" y1="10" x2="20" y2="10"/>' },
+  rain:   { bg:'#dbeafe', c:'#2563eb', path:'<path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 15.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/>' },
+  wind:   { bg:'#ecfeff', c:'#0891b2', path:'<path d="M17.7 7.7a2.5 2.5 0 111.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1111 8H2"/><path d="M12.6 19.4A2 2 0 1114 16H2"/>' },
+  snow:   { bg:'#f0f9ff', c:'#0369a1', path:'<line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/>' },
+  uv:     { bg:'#fef9c3', c:'#ca8a04', path:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>' },
+  fog:    { bg:'#f1f5f9', c:'#64748b', path:'<line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="16" x2="21" y2="16"/>' },
+  dark:   { bg:'#eef2ff', c:'#4f46e5', path:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' },
+  air:    { bg:'#f0fdf4', c:'#16a34a', path:'<path d="M3 6h18M3 12h18M3 18h18"/>' },
+  pollen: { bg:'#fefce8', c:'#a16207', path:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>' },
+};
+
+function tipBadge(iconKey) {
+  const t = TIP_ICONS[iconKey] || TIP_ICONS.fog;
+  return `<div class="tip-badge" style="background:${t.bg}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="${t.c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.path}</svg></div>`;
+}
+
+function getTip(slots, sunrise, aq) {
   const tips = [];
-  if (hasRain)        tips.push('🌂 Vezměte s sebou deštník');
-  if (hasSnow)        tips.push('🧤 Nezapomeňte rukavice a čepici');
-  if (slots[0].temp <= 0)       tips.push('🧥 Mráz! Oblečte dítě do teplé bundy');
-  if (tempDiff >= 7)  tips.push(`🌡️ Rozdíl ${Math.round(tempDiff)}°C během dne – přibalte bundu do batohu`);
-  if (slots[0].temp <= 5 && slots[2].temp >= 14) tips.push('👕 Ráno chladné, odpoledne teplejší – mikina do batohu');
-  return tips[0] || null;
+  const m = slots[0], af = slots[2];
+  const diff = af.temp - m.temp;
+  const maxWind   = Math.max(...slots.map(s => s.wind));
+  const maxGusts  = Math.max(...slots.map(s => s.gusts));
+  const maxPrecip = Math.max(...slots.map(s => s.precip));
+  const maxUV     = Math.max(...slots.map(s => s.uv));
+  const hasRain   = slots.some(s => s.precip > 50);
+  const hasSnow   = slots.some(s => [71,73,75,77,85,86].includes(s.code));
+
+  if (m.feels < 0)
+    tips.push({ icon:'frost', text:`Ráno mráz — zimní bunda, čepice a rukavice.` });
+  else if (m.feels <= 5)
+    tips.push({ icon:'cold', text:`Ráno bude chladno — čepice a teplá bunda.` });
+
+  if (diff >= 7)
+    tips.push({ icon:'temp', text:`Ráno ${m.temp}°C, odpoledne ${af.temp}°C — ráno v bundě, odpoledne si ji dítě možná dá do batohu.` });
+  else if (diff <= -7)
+    tips.push({ icon:'temp', text:`Ráno příjemných ${m.temp}°C, ale odpoledne jen ${af.temp}°C — přibalte bundu do batohu.` });
+
+  if (hasRain)
+    tips.push({ icon:'rain', text:`Pravděpodobnost deště ${maxPrecip}% — přibalte deštník nebo kapuci.` });
+
+  if (maxWind > 30)
+    tips.push({ icon:'wind', text:`Silný vítr (${maxWind} km/h) — zapněte bundu až nahoru.` });
+
+  if (maxGusts > 50)
+    tips.push({ icon:'wind', text:`Pozor, silné nárazy větru (${maxGusts} km/h)!` });
+
+  if (hasSnow && m.feels >= 0)
+    tips.push({ icon:'snow', text:`Sněží — rukavice a voděodolná obuv.` });
+
+  if (maxUV > 5)
+    tips.push({ icon:'uv', text:`UV index ${Math.round(maxUV)} — nezapomeňte opalovací krém a kšiltovku.` });
+
+  if (m.vis < 500)
+    tips.push({ icon:'fog', text:`Ráno mlha — oblečte reflexní vestu nebo aspoň pásky!` });
+
+  if (sunrise) {
+    const sr = new Date(sunrise);
+    if (sr.getHours() + sr.getMinutes()/60 > 8)
+      tips.push({ icon:'dark', text:`Ráno je ještě tma — reflexní prvky!` });
+  }
+
+  if (aq) {
+    if (aq.aqi !== null && aq.aqi > 50)
+      tips.push({ icon:'air', text:`Zhoršená kvalita ovzduší — astmatici a alergici by měli omezit venkovní aktivity.` });
+    if (Math.max(aq.birch??0, aq.grass??0, aq.alder??0) > 50)
+      tips.push({ icon:'pollen', text:`Zvýšený výskyt pylů — alergici nezapomeňte na léky.` });
+  }
+
+  return tips.length ? tips : null;
 }
 
 // ─── Location / geocoding ─────────────────────────────────────
 let manualLocation = null;
 
-function toggleCityForm(forceOpen) {
-  const form = document.getElementById('city-form');
-  const err  = document.getElementById('city-error');
-  const open = forceOpen !== undefined ? forceOpen : !form.classList.contains('open');
-  form.classList.toggle('open', open);
-  err.style.display = 'none';
+function toggleCityForm(force) {
+  const f = document.getElementById('city-form');
+  const e = document.getElementById('city-error');
+  const open = force !== undefined ? force : !f.classList.contains('open');
+  f.classList.toggle('open', open);
+  e.style.display = 'none';
   if (open) document.getElementById('city-input').focus();
 }
 
 async function geocodeCity(name) {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=cs&format=json`;
-  const r = await fetch(url);
+  const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=cs&format=json`);
   const d = await r.json();
   if (!d.results?.length) return null;
-  const { latitude, longitude, name: cn, country } = d.results[0];
-  return { lat: latitude, lon: longitude, name: `${cn}, ${country}` };
+  const { latitude:lat, longitude:lon, name:cn, country } = d.results[0];
+  return { lat, lon, name:`${cn}, ${country}` };
 }
 
 async function submitCity(e) {
@@ -451,32 +638,40 @@ async function submitCity(e) {
 
 async function getLocation() {
   return new Promise(resolve => {
-    if (!navigator.geolocation) { resolve({ lat: 50.0755, lon: 14.4378, name: 'Praha' }); return; }
+    if (!navigator.geolocation) { resolve({ lat:50.0755, lon:14.4378, name:'Praha' }); return; }
     navigator.geolocation.getCurrentPosition(
-      p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, name: null }),
-      ()  => resolve({ lat: 50.0755, lon: 14.4378, name: 'Praha' }),
-      { timeout: 6000 }
+      p => resolve({ lat:p.coords.latitude, lon:p.coords.longitude, name:null }),
+      ()  => resolve({ lat:50.0755, lon:14.4378, name:'Praha' }),
+      { timeout:6000 }
     );
   });
 }
 
 async function reverseGeocode(lat, lon) {
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`, { headers: { 'Accept-Language': 'cs' } });
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`, { headers:{'Accept-Language':'cs'} });
     const d = await r.json();
     return d.address?.city || d.address?.town || d.address?.village || d.address?.county || null;
   } catch { return null; }
 }
 
-// ─── Weather API (2 days) ─────────────────────────────────────
+// ─── Weather API ───────────────────────────────────────────────
 async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast`
     + `?latitude=${lat}&longitude=${lon}`
-    + `&hourly=temperature_2m,apparent_temperature,weathercode`
-    + `&timezone=Europe%2FPrague&forecast_days=2`;
+    + `&hourly=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,wind_gusts_10m,precipitation_probability,visibility,uv_index`
+    + `&daily=sunrise,sunset&timezone=Europe%2FPrague&forecast_days=2`;
   const r = await fetch(url);
   if (!r.ok) throw new Error('Chyba API: ' + r.status);
   return r.json();
+}
+
+async function fetchAirQuality(lat, lon) {
+  try {
+    const r = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=european_aqi,pm2_5,pm10,birch_pollen,grass_pollen,alder_pollen&timezone=Europe%2FPrague&forecast_days=2`);
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
 }
 
 function extractSlots(data, dayStr) {
@@ -485,119 +680,199 @@ function extractSlots(data, dayStr) {
   const temps  = data.hourly.temperature_2m;
   const feels  = data.hourly.apparent_temperature;
   const codes  = data.hourly.weathercode;
+  const winds  = data.hourly.wind_speed_10m;
+  const gusts  = data.hourly.wind_gusts_10m;
+  const precip = data.hourly.precipitation_probability;
+  const vis    = data.hourly.visibility;
+  const uv     = data.hourly.uv_index;
   return slots.map(slot => {
     const target = `${dayStr}T${String(slot.hour).padStart(2,'0')}:00`;
     const idx = times.indexOf(target);
     if (idx === -1) throw new Error(`Čas ${target} nenalezen v datech`);
-    return { ...slot, temp: Math.round(temps[idx]), feels: Math.round(feels[idx]), code: codes[idx], weather: decodeWeather(codes[idx]) };
+    return { ...slot, temp:Math.round(temps[idx]), feels:Math.round(feels[idx]),
+      code:codes[idx], wxType:decodeWeather(codes[idx]), wxText:weatherText(codes[idx]),
+      wind:Math.round(winds[idx]??0), gusts:Math.round(gusts[idx]??0),
+      precip:precip[idx]??0, vis:vis[idx]??10000, uv:uv[idx]??0 };
   });
 }
 
-// ─── Render ───────────────────────────────────────────────────
-let cachedToday    = null;
-let cachedTomorrow = null;
-let activeTab      = 'today';
+function extractAirQuality(aqData, dayStr, hour) {
+  if (!aqData) return null;
+  const idx = aqData.hourly.time.indexOf(`${dayStr}T${String(hour).padStart(2,'0')}:00`);
+  if (idx === -1) return null;
+  return {
+    aqi:   aqData.hourly.european_aqi[idx]  ?? null,
+    birch: aqData.hourly.birch_pollen[idx]   ?? null,
+    grass: aqData.hourly.grass_pollen[idx]   ?? null,
+    alder: aqData.hourly.alder_pollen[idx]   ?? null,
+  };
+}
 
-function makeCard(slot) {
+// ─── Render air quality ───────────────────────────────────────
+function renderAirQuality(aq) {
+  const el = document.getElementById('air-section');
+  if (!aq || aq.aqi === null) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const { aqi, birch, grass, alder } = aq;
+  let cls, label, desc;
+  if      (aqi <= 20) { cls='aqi-great'; label='Výborná';    desc='Vzduch je čistý'; }
+  else if (aqi <= 40) { cls='aqi-good';  label='Dobrá';      desc='Kvalita ovzduší je dobrá'; }
+  else if (aqi <= 60) { cls='aqi-ok';    label='Uspokojivá'; desc='Citlivé skupiny by měly omezit pobyt venku'; }
+  else                { cls='aqi-bad';   label='Špatná';     desc='Omezte pobyt venku'; }
+
+  const pct = Math.min(100, aqi / 1.0);
+
+  const pollenItems = [
+    { n:'Bříza', v:birch }, { n:'Trávy', v:grass }, { n:'Olše', v:alder }
+  ].filter(p => p.v !== null && p.v > 10);
+
+  const pollenHtml = pollenItems.length
+    ? `<div class="pollen-row">${pollenItems.map(p=>`<span class="pollen-chip${p.v>50?' hi':''}">${p.n} ${Math.round(p.v)}</span>`).join('')}</div>`
+    : '';
+
+  let sc, sl;
+  if (aqi <= 40) { sc='s-ok';  sl='Dobrý den pro sport venku'; }
+  else if (aqi <= 60) { sc='s-cau'; sl='Sport venku s opatrností'; }
+  else { sc='s-no'; sl='Raději sport uvnitř'; }
+
+  el.style.display = 'block';
+  el.innerHTML = `<div class="panel ${cls}">
+    <div class="panel-lbl">🌬️ Kvalita ovzduší</div>
+    <div class="aqi-top">
+      <div class="aqi-left">
+        <span class="aqi-num">${aqi}</span>
+        <span class="aqi-word">${label}</span>
+      </div>
+      <div class="aqi-icn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.7 7.7a2.5 2.5 0 111.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1111 8H2"/><path d="M12.6 19.4A2 2 0 1114 16H2"/></svg>
+      </div>
+    </div>
+    <div class="aqi-desc">${desc}</div>
+    <div class="aqi-track"><div class="aqi-fill" style="width:${pct}%"></div></div>
+    <div class="aqi-scale"><span>0</span><span>50</span><span>100+</span></div>
+    ${pollenHtml}
+    <div style="margin-top:10px"><span class="sport-chip ${sc}">${sl}</span></div>
+  </div>`;
+}
+
+// ─── Make card ────────────────────────────────────────────────
+function makeCard(slot, isActive) {
   const cls = colorClass(slot.temp);
   const clothing = getClothing(slot.temp, slot.feels, slot.code);
-  const card = document.createElement('div');
-  card.className = `card ${cls}`;
   const sign = n => n > 0 ? '+' : '';
+  const extra = [];
+  if (slot.wind   > 20) extra.push(`<span class="chip chip-wind">Vítr ${slot.wind} km/h</span>`);
+  if (slot.precip > 30) extra.push(`<span class="chip chip-rain">Déšť ${slot.precip}%</span>`);
+  if (slot.uv     >  3) extra.push(`<span class="chip chip-uv">UV ${Math.round(slot.uv)}</span>`);
+
+  const card = document.createElement('div');
+  card.className = `card ${cls}${isActive ? ' active-slot' : ''}`;
   card.innerHTML = `
-    <div class="card-main">
-      <div class="card-left">
-        <div class="card-label">${slot.label}</div>
-        <div class="card-time">${String(slot.hour).padStart(2,'0')}:00</div>
+    <div class="card-hdr">
+      <div class="card-meta">
+        <div class="card-lbl">${slot.label}</div>
+        <div class="card-time">${slot.time}</div>
         <div class="card-desc">${slot.desc}</div>
-        <div class="card-wx">${slot.weather.text}</div>
+        <div class="card-wx-text">${slot.wxText}</div>
       </div>
-      <div class="card-right">
-        <div class="card-emoji">${slot.weather.emoji}</div>
+      ${wxSvg(slot.wxType)}
+    </div>
+    <div class="card-temp-row">
+      <div>
         <div class="card-temp">${sign(slot.temp)}${slot.temp}°</div>
         <div class="card-feels">Pocitově ${sign(slot.feels)}${slot.feels}°C</div>
       </div>
     </div>
     <div class="card-clothing">
-      ${clothing.map(c => `<span class="chip">${c}</span>`).join('')}
-    </div>
-  `;
+      <div class="clothing-lbl">Oblečte dítě:</div>
+      <div class="chips">
+        ${clothing.map(c=>`<span class="chip">${c}</span>`).join('')}
+        ${extra.join('')}
+      </div>
+    </div>`;
   return card;
 }
 
+// ─── Render tab ───────────────────────────────────────────────
+let cachedToday=null, cachedTomorrow=null;
+let cachedAqToday=null, cachedAqTomorrow=null;
+let cachedSunrises=[];
+let activeTab='today';
+
 function renderTab() {
-  const slots = activeTab === 'today' ? cachedToday : cachedTomorrow;
+  const isT    = activeTab === 'today';
+  const slots  = isT ? cachedToday    : cachedTomorrow;
+  const aq     = isT ? cachedAqToday  : cachedAqTomorrow;
+  const sunrise= isT ? cachedSunrises[0] : cachedSunrises[1];
+  const activeIdx = isT ? getCurrentSlotIndex(slots) : -1;
+
   const app = document.getElementById('app');
   app.innerHTML = '';
   const cards = document.createElement('div');
   cards.className = 'cards';
-  slots.forEach(s => cards.appendChild(makeCard(s)));
+  slots.forEach((s, i) => cards.appendChild(makeCard(s, i === activeIdx)));
   app.appendChild(cards);
 
-  // Tip only for today
-  const banner = document.getElementById('tip-banner');
-  if (activeTab === 'today') {
-    const tip = getTip(slots);
-    if (tip) { banner.style.display = 'block'; banner.innerHTML = `<strong>Tip na dnes:</strong> ${tip}`; return; }
+  renderAirQuality(aq);
+
+  const tipEl = document.getElementById('tip-section');
+  const tips  = getTip(slots, sunrise, aq);
+  if (tips) {
+    const lbl = isT ? 'Tipy na dnes' : 'Tipy na zítra';
+    tipEl.style.display = 'block';
+    tipEl.innerHTML = `<div class="panel">
+      <div class="panel-lbl">📋 ${lbl}</div>
+      <div class="tip-list">
+        ${tips.map(t=>`<div class="tip-item">${tipBadge(t.icon)}<div class="tip-text">${t.text}</div></div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    tipEl.style.display = 'none';
+    tipEl.innerHTML = '';
   }
-  banner.style.display = 'none';
 }
 
 function switchTab(tab) {
   activeTab = tab;
-  document.getElementById('tab-today').classList.toggle('active',    tab === 'today');
-  document.getElementById('tab-tomorrow').classList.toggle('active', tab === 'tomorrow');
+  document.getElementById('tab-today').classList.toggle('active',    tab==='today');
+  document.getElementById('tab-tomorrow').classList.toggle('active', tab==='tomorrow');
   renderTab();
 }
 
-function render(todaySlots, tomorrowSlots, locationName) {
-  cachedToday    = todaySlots;
-  cachedTomorrow = tomorrowSlots;
+function render(todaySlots, tomorrowSlots, aqToday, aqTomorrow, sunrises, cityName) {
+  cachedToday=todaySlots; cachedTomorrow=tomorrowSlots;
+  cachedAqToday=aqToday; cachedAqTomorrow=aqTomorrow;
+  cachedSunrises=sunrises;
 
-  // Populate tab date labels
-  const today    = new Date();
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-  const fmt = d => d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
+  const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
+  const fmt = d => d.toLocaleDateString('cs-CZ', { day:'numeric', month:'numeric' });
   document.getElementById('tab-today-date').textContent    = fmt(today);
-  document.getElementById('tab-tomorrow-date').textContent = fmt(tomorrow);
+  document.getElementById('tab-tomorrow-date').textContent = fmt(tom);
   document.getElementById('day-tabs').classList.add('visible');
 
   renderTab();
 
-  document.getElementById('refresh-btn').style.display = 'flex';
   document.getElementById('settings-btn').style.display = 'flex';
-  document.getElementById('loc-text').textContent = locationName || 'Vaše poloha';
-  document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('loc-text').textContent  = cityName || 'Vaše poloha';
+  document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
 }
 
-// ─── Settings modal ───────────────────────────────────────────
+// ─── Settings ─────────────────────────────────────────────────
 function openSettings() {
-  const hours = loadHours();
-  document.getElementById('t-morning').value   = hours[0];
-  document.getElementById('t-noon').value      = hours[1];
-  document.getElementById('t-afternoon').value = hours[2];
+  const times = loadTimes();
+  document.getElementById('t-morning').value   = times[0];
+  document.getElementById('t-noon').value      = times[1];
+  document.getElementById('t-afternoon').value = times[2];
   document.getElementById('settings-error').style.display = 'none';
   document.getElementById('settings-modal').classList.add('open');
 }
-
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('open');
-}
-
-function closeSettingsOnBg(e) {
-  if (e.target === document.getElementById('settings-modal')) closeSettings();
-}
-
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+function closeSettingsOnBg(e) { if (e.target===document.getElementById('settings-modal')) closeSettings(); }
 function saveTimes() {
-  const vals = [
-    parseInt(document.getElementById('t-morning').value,   10),
-    parseInt(document.getElementById('t-noon').value,      10),
-    parseInt(document.getElementById('t-afternoon').value, 10),
-  ];
-  const err = document.getElementById('settings-error');
-  const valid = vals.every(v => Number.isInteger(v) && v >= 0 && v <= 23)
-    && vals[0] < vals[1] && vals[1] < vals[2];
-  if (!valid) { err.style.display = 'block'; return; }
+  const vals = ['t-morning','t-noon','t-afternoon'].map(id => document.getElementById(id).value);
+  const err  = document.getElementById('settings-error');
+  const toM  = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+  const valid = vals.every(t=>/^\d{2}:\d{2}$/.test(t)) && toM(vals[0])<toM(vals[1]) && toM(vals[1])<toM(vals[2]);
+  if (!valid) { err.style.display='block'; return; }
   localStorage.setItem(LS_KEY, JSON.stringify(vals));
   closeSettings();
   init();
@@ -606,37 +881,35 @@ function saveTimes() {
 // ─── Main ─────────────────────────────────────────────────────
 async function init() {
   document.getElementById('app').innerHTML = `<div class="status"><div class="spinner"></div>Načítám předpověď počasí…</div>`;
-  document.getElementById('tip-banner').style.display = 'none';
-  document.getElementById('refresh-btn').style.display = 'none';
+  document.getElementById('tip-section').style.display  = 'none';
+  document.getElementById('air-section').style.display  = 'none';
   document.getElementById('settings-btn').style.display = 'none';
   document.getElementById('date-badge').textContent = formatDate(new Date());
 
   try {
     let loc, cityName;
-    if (manualLocation) {
-      loc = manualLocation; cityName = loc.name;
-    } else {
+    if (manualLocation) { loc=manualLocation; cityName=loc.name; }
+    else {
       loc = await getLocation();
       document.getElementById('loc-text').textContent = 'Zjišťuji polohu…';
       cityName = loc.name || await reverseGeocode(loc.lat, loc.lon);
     }
 
-    const data = await fetchWeather(loc.lat, loc.lon);
+    const [data, aqData] = await Promise.all([fetchWeather(loc.lat,loc.lon), fetchAirQuality(loc.lat,loc.lon)]);
 
-    const today    = new Date();
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
+    const tS=dateStr(today), tmS=dateStr(tom);
 
-    const todaySlots    = extractSlots(data, dateStr(today));
-    const tomorrowSlots = extractSlots(data, dateStr(tomorrow));
+    const todaySlots    = extractSlots(data, tS);
+    const tomorrowSlots = extractSlots(data, tmS);
+    const mH            = getSlots()[0].hour;
+    const aqToday       = extractAirQuality(aqData, tS,  mH);
+    const aqTom         = extractAirQuality(aqData, tmS, mH);
+    const sunrises      = data.daily?.sunrise ?? [];
 
-    render(todaySlots, tomorrowSlots, cityName);
-  } catch (err) {
-    document.getElementById('app').innerHTML = `
-      <div class="error-box">
-        ⚠️ Nepodařilo se načíst počasí.<br>
-        <small>${err.message}</small><br><br>
-        <button class="icon-btn" style="margin:0 auto" onclick="init()">🔄 Zkusit znovu</button>
-      </div>`;
+    render(todaySlots, tomorrowSlots, aqToday, aqTom, sunrises, cityName);
+  } catch(err) {
+    document.getElementById('app').innerHTML = `<div class="err-box">⚠️ Nepodařilo se načíst počasí.<br><small>${err.message}</small><br><button class="retry-btn" onclick="init()">🔄 Zkusit znovu</button></div>`;
     console.error(err);
   }
 }
