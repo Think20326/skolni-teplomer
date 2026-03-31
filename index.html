@@ -110,23 +110,25 @@
     /* Date row */
     .date-row{padding:14px 0 16px}
 
-    /* Tabs */
+    /* ── Tabs — oval pill style ──────────────────────── */
     .day-tabs{
       display:none;margin-bottom:16px;
-      background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-      border:1px solid var(--card-border);border-radius:16px;padding:4px;gap:4px;
+      background:var(--glass);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid var(--glass-border);
+      border-radius:50px;padding:4px;gap:0;
     }
     .day-tabs.visible{display:flex}
     .tab-btn{
-      flex:1;border:none;border-radius:12px;padding:9px 8px;
-      font-size:.86rem;font-weight:600;font-family:inherit;cursor:pointer;
+      flex:1;border:none;border-radius:50px;padding:10px 20px;
+      font-size:.88rem;font-weight:600;font-family:inherit;cursor:pointer;
       color:var(--text2);background:transparent;
-      transition:background .2s,color .2s,box-shadow .2s;
+      transition:background .25s,color .25s,box-shadow .25s;
     }
-    .tab-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.1)}
-    .dark .tab-btn.active{box-shadow:0 1px 6px rgba(0,0,0,.3)}
+    .tab-btn.active{background:var(--text);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+    .dark .tab-btn.active{color:#0f172a}
     .tab-inner{display:flex;flex-direction:column;align-items:center;gap:1px}
-    .tab-label{font-size:.86rem;font-weight:600}
+    .tab-label{font-size:.88rem;font-weight:600}
     .tab-date{font-size:.66rem;font-weight:400;opacity:.6}
 
     /* ── Cards ──────────────────────────────────────── */
@@ -142,11 +144,11 @@
       display:flex;flex-direction:column;gap:12px;
     }
     .card:active{transform:scale(.99)}
+    /* Left accent stripe only — no decorative circle behind icon */
     .card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
-    .card::before{content:'';position:absolute;top:-20px;right:-20px;width:90px;height:90px;border-radius:50%;opacity:.1;pointer-events:none}
-    .card.cold::after{background:var(--cold)} .card.cold::before{background:var(--cold)}
-    .card.warm::after{background:var(--warm)} .card.warm::before{background:var(--warm)}
-    .card.neutral::after{background:var(--neutral)} .card.neutral::before{background:var(--neutral)}
+    .card.cold::after{background:var(--cold)}
+    .card.warm::after{background:var(--warm)}
+    .card.neutral::after{background:var(--neutral)}
     .card.active-slot.cold{box-shadow:var(--card-shadow),0 0 0 2px rgba(59,130,246,.2);border-color:rgba(59,130,246,.3)}
     .card.active-slot.warm{box-shadow:var(--card-shadow),0 0 0 2px rgba(249,115,22,.2);border-color:rgba(249,115,22,.3)}
     .card.active-slot.neutral{box-shadow:var(--card-shadow),0 0 0 2px rgba(100,116,139,.2);border-color:rgba(100,116,139,.3)}
@@ -183,6 +185,18 @@
     .dark .chip-rain{background:rgba(59,130,246,.15)!important;color:#60a5fa!important}
     .dark .chip-uv{background:rgba(234,179,8,.15)!important;color:#fbbf24!important}
 
+    /* AQI chips on cards */
+    .chip-aqi-0,.chip-aqi-1{background:rgba(22,163,74,.1)!important;color:#15803d!important;border-color:rgba(22,163,74,.2)!important}
+    .chip-aqi-2{background:rgba(202,138,4,.1)!important;color:#a16207!important;border-color:rgba(202,138,4,.2)!important}
+    .chip-aqi-3{background:rgba(234,88,12,.1)!important;color:#c2410c!important;border-color:rgba(234,88,12,.2)!important}
+    .chip-aqi-4{background:rgba(220,38,38,.1)!important;color:#dc2626!important;border-color:rgba(220,38,38,.2)!important}
+    .chip-aqi-5{background:rgba(124,58,237,.1)!important;color:#7c3aed!important;border-color:rgba(124,58,237,.2)!important}
+    .dark .chip-aqi-0,.dark .chip-aqi-1{background:rgba(22,163,74,.18)!important;color:#4ade80!important}
+    .dark .chip-aqi-2{background:rgba(202,138,4,.18)!important;color:#fbbf24!important}
+    .dark .chip-aqi-3{background:rgba(234,88,12,.18)!important;color:#fb923c!important}
+    .dark .chip-aqi-4{background:rgba(220,38,38,.18)!important;color:#f87171!important}
+    .dark .chip-aqi-5{background:rgba(124,58,237,.18)!important;color:#a78bfa!important}
+
     /* ── Glass panel ────────────────────────────────── */
     .panel{
       background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -191,28 +205,8 @@
     }
     .panel-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text3);margin-bottom:14px}
 
-    /* ── Air quality ────────────────────────────────── */
+    /* ── Air quality (new design) ────────────────────── */
     #air-section{display:none}
-    .aqi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .aqi-left{display:flex;align-items:baseline;gap:8px}
-    .aqi-num{font-size:2.1rem;font-weight:800;line-height:1}
-    .aqi-word{font-size:.9rem;font-weight:600}
-    .aqi-desc{font-size:.75rem;color:var(--text2);margin-bottom:10px}
-    .aqi-icn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
-    .aqi-track{height:5px;background:var(--divider);border-radius:50px;overflow:hidden;margin-bottom:3px}
-    .aqi-fill{height:100%;border-radius:50px;transition:width .6s ease}
-    .aqi-scale{display:flex;justify-content:space-between}
-    .aqi-scale span{font-size:.58rem;color:var(--text3)}
-    .aqi-great{--ac:#16a34a} .aqi-good{--ac:#ca8a04} .aqi-ok{--ac:#ea580c} .aqi-bad{--ac:#dc2626}
-    .aqi-num,.aqi-word{color:var(--ac)} .aqi-fill{background:var(--ac)}
-    .aqi-icn{background:color-mix(in srgb,var(--ac) 12%,transparent)}
-    .aqi-icn svg{color:var(--ac)}
-
-    .pollen-row{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}
-    .pollen-chip{font-size:.7rem;padding:3px 10px;border-radius:50px;font-weight:500;background:rgba(22,163,74,.09);color:#15803d;border:1px solid rgba(22,163,74,.15)}
-    .pollen-chip.hi{background:rgba(202,138,4,.09);color:#a16207;border-color:rgba(202,138,4,.15)}
-    .dark .pollen-chip{background:rgba(22,163,74,.14);color:#4ade80}
-    .dark .pollen-chip.hi{background:rgba(202,138,4,.14);color:#fbbf24}
     .sport-chip{display:inline-block;font-size:.75rem;font-weight:600;padding:5px 12px;border-radius:50px;border:1px solid transparent}
     .s-ok{background:rgba(22,163,74,.09);color:#15803d;border-color:rgba(22,163,74,.2)}
     .s-cau{background:rgba(202,138,4,.09);color:#a16207;border-color:rgba(202,138,4,.2)}
@@ -374,6 +368,37 @@ function toggleTheme() {
   applyTheme(s ? s === 'dark' : window.matchMedia('(prefers-color-scheme:dark)').matches);
 })();
 
+// ─── Random helper ────────────────────────────────────────────
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ─── AQI motivational texts (6 levels: 0-20, 21-40, 41-60, 61-80, 81-100, 100+) ──
+const AQI_MOT = [
+  ["Vzduch jako v lese! Ideální čas na pořádný trénink nebo odpoledne s dětmi na hřišti.","Vzduch je dnes jako z hor. Ven s dětmi, ať si to užijí!","Parádní vzduch — kola, koloběžky, hřiště, dneska je to bez limitu.","Lepší vzduch dnes nenajdete. Ideální den vyběhnout ven.","Plíce si dnes zazpívají. Tohle je den na hřiště od rána do večera.","Vzduch jak na horské louce. Škoda sedět doma, ven s tím!","Dneska se dýchá jako v pohádce. Kdo nesportuje, ten prohloupí."],
+  ["Skvělá zpráva: Vzduch je čistý. Ideální na cestu do školy pěšky nebo fotbálek po družině.","Vzduch je v pohodě — klidně naplánujte odpolední kroužek venku.","Čistý vzduch, žádné starosti. Fotbal, kolo, park — cokoliv.","Dneska se venku dýchá dobře. Škola pěšky? Jasně!","Vzduch drží parádně. Družina venku, kroužek venku, všechno venku.","Žádný smog, žádné starosti. Klidně vyražte na delší procházku.","Dýchá se fajn. Kolo do školy je dneska sázka na jistotu."],
+  ["Pořád je to fajn. Venkovní kroužky i hřiště jsou v pohodě, jen se dneska nikam nežeňte.","Ven jít můžete, ale maraton dnes neběžte. Procházka nebo lehký sport stačí.","Vzduch není špatný, ale ani skvělý. Kratší výběh jo, závody ne.","Venku to jde, jen to dneska nepřehánějte s tempem.","Hřiště v pohodě, ale nechte závodění na jindy. Dneska pohodový režim.","Ven klidně, ale bez výkonů na maximum. Tělo vám poděkuje.","Vzduch je tak napůl. Procházka super, sprint raději ne."],
+  ["Dnes raději zvolněte. Místo běhání po hřišti zkuste klidnější procházku nebo hraní doma.","Vzduch dnes zlobí. Kratší procházka OK, ale sport raději přesuňte dovnitř.","Hřiště počká. Dneska je lepší stavebnice než fotbal.","Astmatici a alergici pozor — dnes raději vnitřní aktivity.","Venku to dnes moc nevoní. Přesuňte hry dovnitř, plíce ocení klid.","Dneska vzduch nespolupracuje. Zkuste deskové hry místo hřiště.","Běhání venku dnes škrtněte. Krátká procházka OK, ale nic víc."],
+  ["Dneska to na hřiště není. Sport i divoké hry raději přesuňte dovnitř, plíce vám poděkují.","Špatný den pro plíce. Nechte děti hrát si doma, venku to dnes nestojí za to.","Vzduch je dnes ošklivý. Tělocvična, bazén, cokoliv pod střechou.","Venkovní aktivity dnes škrtněte. Plíce budou vděčné.","Hřiště dnes zavřete. Aspoň v hlavě. Lego, knihy, vnitřní bazén — cokoliv uvnitř.","Dneska je venku dýchací past. Všechny aktivity přesuňte pod střechu.","Sport venku? Dnes fakt ne. Dejte přednost kinu, muzeu nebo domácí olympiádě."],
+  ["Stopka pro venkovní aktivity. Děti nechte raději doma, venku je dnes opravdu nedýchatelno.","Červený alarm. Žádné venkovní aktivity — ani procházka. Zůstaňte uvnitř.","Dnes platí: dveře zavřít, okna zavřít, ven ani krok. Vzduch je nebezpečný.","Absolutní stop. Venku se dnes nedýchá, zůstaňte s dětmi uvnitř.","Dnes je venku opravdu zle. Žádné výjimky — děti zůstávají uvnitř.","Vzduch je dnes toxický. Ani krátká cesta ven. Zůstaňte doma.","Nouzový režim pro plíce. Venku dnes nic, opravdu nic."]
+];
+
+// ─── AQI short chip texts (6 levels) ─────────────────────────
+const AQI_CHIP = [
+  ["Vzduch jako křišťál. Ven s dětmi!","Parádní vzduch — hurá ven!","Dýchá se božsky. Plný plyn na hřiště!","Vzduch z hor. Dneska patří děti ven!","Bomba vzduch. Kdo je doma, prodělává!","Čistota vzduchu na jedničku. Ven!"],
+  ["Čistý vzduch. Klidně ven!","Vzduch OK — fotbálek po škole bez obav.","Dýchá se fajn. Ven se to vyplatí!","Dobrý vzduch, dobrý den na hřiště.","Vzduch v pohodě. Kolo, park, cokoliv.","Čistý vzduch, jasná volba — ven!"],
+  ["Ven jo, ale pohodovým tempem.","Vzduch ujde. Sport klidně, ale bez přehánění.","Procházka fajn, maraton radši ne.","Dá se dýchat. Jen to nepřežeňte.","Venku OK, ale na pohodu.","Jde to, ale nešlapte na plyn."],
+  ["Vzduch zlobí. Zvolněte.","Dnes spíš dovnitř. Hřiště počká.","Raději klid. Vzduch není kamarád.","Procházka OK, běhání ne.","Vzduch dnes nespolupracuje.","Zvolněte. Venku to dnes nevoní."],
+  ["Hřiště dnes ne. Plíce řekly stop.","Špatný vzduch. Sport jen uvnitř.","Dnes zůstaňte pod střechou.","Venku to dnes nefunguje. Dovnitř!","Vzduch je ošklivý. Všechno dovnitř.","Stop pro venkovní aktivity."],
+  ["STOP. Ven dnes ani krok.","Nedýchatelno. Zůstaňte doma.","Červený alarm. Dveře zavřít!","Nebezpečný vzduch. Žádné ven.","Nouzový režim. Zůstaňte uvnitř.","Toxický vzduch. Absolutní stop."]
+];
+
+// ─── Pollen tip texts (4 levels: 2/5, 3/5, 4/5, 5/5) ─────────
+const POLLEN_TEXTS = [
+  ["Lehký pylový nádech ve vzduchu. Nic dramatického, ale citlivé nosy to poznají.","Pyly trochu poletují. Kapesník do kapsy!","Mírné pyly v ovzduší. Alergici, hlídáme vám to (:","Pyly se probouzí. Nic vážného, ale kdo ví, ten nosí kapesník.","Lehký pylový koktejl ve vzduchu. Většině lidí to nevadí, alergici to ucítí."],
+  ["Alergici, kapesníky s sebou!","Alergici, držte se! Pyly dnes létají.","Pyly v akci — alergici, nezapomeňte na léky!","Nos bude dnes pracovat přesčas. Léky s sebou!","Pyly se probudily. Antihistaminika do batohu!","Alergici, dnes to bude výzva. Připravte se!"],
+  ["Alergici, dnes je to hustý. Léky jsou nutnost!","Pylová smršť! Kapky do očí a kapesníky povinně.","Dnes pyly nelítají — řádí. Alergici, vyzbrojte se!","Pylový mejdan venku. Léky, kapesníky, odhodlání.","Nos a oči budou protestovat. Léky jsou základ!","Pyly dnes jedou naplno. Bez léků ani krok ven!"],
+  ["Pylová apokalypsa! Alergici, zvažte zůstat uvnitř.","Pyly na maximu. Kdo může, zůstane doma.","Dnes je venku pylové peklo. Alergici, radši dovnitř!","Rekordní pyly. Okna zavřít, léky vzít, ven jen nutně.","Pylový armagedon. Alergici, dnes je den na Netflix.","Pyly šílí. Bez léků a roušky ani na zahradu!"]
+];
+
 // ─── Slot config ──────────────────────────────────────────────
 const LS_KEY = 'skolni-teplomer-v3';
 const DEF_TIMES = ['08:00','12:00','16:00'];
@@ -442,7 +467,7 @@ function weatherText(code) {
   return 'Neznámo';
 }
 
-// ─── SVG weather icons ────────────────────────────────────────
+// ─── SVG weather icons (no circle background) ─────────────────
 function wxSvg(type) {
   const svgs = {
     'sunny': `<svg class="wx-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -491,7 +516,7 @@ function wxSvg(type) {
   return svgs[type] || svgs['cloudy'];
 }
 
-// ─── Clothing (no emoji) ──────────────────────────────────────
+// ─── Clothing — uses feels (apparent) temperature ─────────────
 function getClothing(temp, feels, code) {
   const items = [];
   const isRain = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code);
@@ -525,6 +550,26 @@ function formatDate(d) {
   return d.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'long' });
 }
 
+// ─── Pollen level conversion (grains/m³ → 1–5) ───────────────
+function pollenLevel(v) {
+  if (!v || v <= 0)  return 0;
+  if (v <= 10)  return 1;
+  if (v <= 30)  return 2;
+  if (v <= 60)  return 3;
+  if (v <= 100) return 4;
+  return 5;
+}
+
+// ─── AQI level index (0–5) ────────────────────────────────────
+function aqiLevel(aqi) {
+  if (aqi <= 20)  return 0;
+  if (aqi <= 40)  return 1;
+  if (aqi <= 60)  return 2;
+  if (aqi <= 80)  return 3;
+  if (aqi <= 100) return 4;
+  return 5;
+}
+
 // ─── Tips ─────────────────────────────────────────────────────
 const TIP_ICONS = {
   frost:  { bg:'#dbeafe', c:'#2563eb', path:'<line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>' },
@@ -545,7 +590,8 @@ function tipBadge(iconKey) {
   return `<div class="tip-badge" style="background:${t.bg}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="${t.c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.path}</svg></div>`;
 }
 
-function getTip(slots, sunrise, aq) {
+// aqArray = array of 3 {aqi, birch, grass, alder} objects (one per slot)
+function getTip(slots, sunrise, aqArray) {
   const tips = [];
   const m = slots[0], af = slots[2];
   const diff = af.temp - m.temp;
@@ -557,9 +603,9 @@ function getTip(slots, sunrise, aq) {
   const hasSnow   = slots.some(s => [71,73,75,77,85,86].includes(s.code));
 
   if (m.feels < 0)
-    tips.push({ icon:'frost', text:`Ráno mráz — zimní bunda, čepice a rukavice.` });
+    tips.push({ icon:'frost', text:'Ráno mráz — zimní bunda, čepice a rukavice.' });
   else if (m.feels <= 5)
-    tips.push({ icon:'cold', text:`Ráno bude chladno — čepice a teplá bunda.` });
+    tips.push({ icon:'cold', text:'Ráno bude chladno — čepice a teplá bunda.' });
 
   if (diff >= 7)
     tips.push({ icon:'temp', text:`Ráno ${m.temp}°C, odpoledne ${af.temp}°C — ráno v bundě, odpoledne si ji dítě možná dá do batohu.` });
@@ -576,25 +622,45 @@ function getTip(slots, sunrise, aq) {
     tips.push({ icon:'wind', text:`Pozor, silné nárazy větru (${maxGusts} km/h)!` });
 
   if (hasSnow && m.feels >= 0)
-    tips.push({ icon:'snow', text:`Sněží — rukavice a voděodolná obuv.` });
+    tips.push({ icon:'snow', text:'Sněží — rukavice a voděodolná obuv.' });
 
   if (maxUV > 5)
     tips.push({ icon:'uv', text:`UV index ${Math.round(maxUV)} — nezapomeňte opalovací krém a kšiltovku.` });
 
   if (m.vis < 500)
-    tips.push({ icon:'fog', text:`Ráno mlha — oblečte reflexní vestu nebo aspoň pásky!` });
+    tips.push({ icon:'fog', text:'Ráno mlha — oblečte reflexní vestu nebo aspoň pásky!' });
 
   if (sunrise) {
     const sr = new Date(sunrise);
     if (sr.getHours() + sr.getMinutes()/60 > 8)
-      tips.push({ icon:'dark', text:`Ráno je ještě tma — reflexní prvky!` });
+      tips.push({ icon:'dark', text:'Ráno je ještě tma — reflexní prvky!' });
   }
 
-  if (aq) {
-    if (aq.aqi !== null && aq.aqi > 50)
-      tips.push({ icon:'air', text:`Zhoršená kvalita ovzduší — astmatici a alergici by měli omezit venkovní aktivity.` });
-    if (Math.max(aq.birch??0, aq.grass??0, aq.alder??0) > 50)
-      tips.push({ icon:'pollen', text:`Zvýšený výskyt pylů — alergici nezapomeňte na léky.` });
+  // Air quality tip from max AQI across slots
+  if (aqArray) {
+    const validAqs = aqArray.filter(a => a && a.aqi !== null);
+    if (validAqs.length) {
+      const maxAqi = Math.max(...validAqs.map(a => a.aqi));
+      if (maxAqi > 60)
+        tips.push({ icon:'air', text:'Zhoršená kvalita ovzduší — astmatici a alergici by měli omezit venkovní aktivity.' });
+    }
+
+    // Pollen tips per pollen type (use morning slot for pollen data)
+    const aqMorning = aqArray[0];
+    if (aqMorning) {
+      const pollenTypes = [
+        { name:'Bříza', v: aqMorning.birch ?? 0 },
+        { name:'Trávy', v: aqMorning.grass ?? 0 },
+        { name:'Olše',  v: aqMorning.alder ?? 0 },
+      ];
+      for (const p of pollenTypes) {
+        const lvl = pollenLevel(p.v);
+        if (lvl >= 2) {
+          const textArr = POLLEN_TEXTS[Math.min(lvl - 2, POLLEN_TEXTS.length - 1)];
+          tips.push({ icon:'pollen', text:`🌿 ${p.name} (${lvl}/5): ${rand(textArr)}` });
+        }
+      }
+    }
   }
 
   return tips.length ? tips : null;
@@ -696,66 +762,109 @@ function extractSlots(data, dayStr) {
   });
 }
 
-function extractAirQuality(aqData, dayStr, hour) {
+// Returns array of 3 AQ objects (one per slot), or null
+function extractAirQualityForSlots(aqData, dayStr, slots) {
   if (!aqData) return null;
-  const idx = aqData.hourly.time.indexOf(`${dayStr}T${String(hour).padStart(2,'0')}:00`);
-  if (idx === -1) return null;
-  return {
-    aqi:   aqData.hourly.european_aqi[idx]  ?? null,
-    birch: aqData.hourly.birch_pollen[idx]   ?? null,
-    grass: aqData.hourly.grass_pollen[idx]   ?? null,
-    alder: aqData.hourly.alder_pollen[idx]   ?? null,
-  };
+  return slots.map(slot => {
+    const target = `${dayStr}T${String(slot.hour).padStart(2,'0')}:00`;
+    const idx = aqData.hourly.time.indexOf(target);
+    if (idx === -1) return null;
+    return {
+      aqi:   aqData.hourly.european_aqi[idx]  ?? null,
+      birch: aqData.hourly.birch_pollen[idx]   ?? null,
+      grass: aqData.hourly.grass_pollen[idx]   ?? null,
+      alder: aqData.hourly.alder_pollen[idx]   ?? null,
+    };
+  });
 }
 
-// ─── Render air quality ───────────────────────────────────────
-function renderAirQuality(aq) {
+// ─── Render air quality (new design) ─────────────────────────
+function renderAirQuality(aqArray) {
   const el = document.getElementById('air-section');
-  if (!aq || aq.aqi === null) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  const { aqi, birch, grass, alder } = aq;
-  let cls, label, desc;
-  if      (aqi <= 20) { cls='aqi-great'; label='Výborná';    desc='Vzduch je čistý'; }
-  else if (aqi <= 40) { cls='aqi-good';  label='Dobrá';      desc='Kvalita ovzduší je dobrá'; }
-  else if (aqi <= 60) { cls='aqi-ok';    label='Uspokojivá'; desc='Citlivé skupiny by měly omezit pobyt venku'; }
-  else                { cls='aqi-bad';   label='Špatná';     desc='Omezte pobyt venku'; }
+  if (!aqArray) { el.style.display='none'; el.innerHTML=''; return; }
+  const validAqs = aqArray.filter(a => a && a.aqi !== null);
+  if (!validAqs.length) { el.style.display='none'; el.innerHTML=''; return; }
 
-  const pct = Math.min(100, aqi / 1.0);
+  // Overall display uses max AQI of all 3 slots
+  const maxAqi = Math.max(...validAqs.map(a => a.aqi));
+  const lvl = aqiLevel(maxAqi);
 
-  const pollenItems = [
-    { n:'Bříza', v:birch }, { n:'Trávy', v:grass }, { n:'Olše', v:alder }
-  ].filter(p => p.v !== null && p.v > 10);
+  const AQI_LABELS = ['Vynikající','Dobrá','Přijatelná','Zhoršená','Špatná','Kritická'];
+  const AQI_ICONS  = ['🍃','🍃','🍃','🍂','⚠️','⚠️'];
+  const AQI_COLORS = ['#16a34a','#16a34a','#ca8a04','#ea580c','#dc2626','#7c3aed'];
 
-  const pollenHtml = pollenItems.length
-    ? `<div class="pollen-row">${pollenItems.map(p=>`<span class="pollen-chip${p.v>50?' hi':''}">${p.n} ${Math.round(p.v)}</span>`).join('')}</div>`
-    : '';
+  const label = AQI_LABELS[lvl];
+  const icon  = AQI_ICONS[lvl];
+  const color = AQI_COLORS[lvl];
 
+  // Gradient bar dot position (0–150 scale, clamped 2%–98%)
+  const pct = Math.min(98, Math.max(2, (maxAqi / 150) * 100));
+
+  // Random motivational text
+  const motivText = rand(AQI_MOT[lvl]);
+
+  // Timing note based on morning vs afternoon AQI
+  const morningAqi = aqArray[0]?.aqi ?? 0;
+  const afternoonAqi = aqArray[2]?.aqi ?? 0;
+  let timingNote = '';
+  if (morningAqi >= 61 && afternoonAqi < 60)
+    timingNote = ' Odpoledne se to vybere — nechte si hřiště až na potom!';
+  else if (morningAqi < 60 && afternoonAqi >= 61)
+    timingNote = ' Ráno je vzduch nejlepší — využijte dopoledne na sport!';
+  else if (morningAqi >= 60 && afternoonAqi >= 60)
+    timingNote = ' Dnes to venku nebude celý den. Plánujte uvnitř.';
+
+  // Pollen from morning slot
+  const aqMorning = aqArray[0] || validAqs[0];
+  const pB = pollenLevel(aqMorning?.birch ?? 0);
+  const pG = pollenLevel(aqMorning?.grass ?? 0);
+  const pA = pollenLevel(aqMorning?.alder ?? 0);
+
+  function pollenStyle(lvl) {
+    if (lvl <= 1) return `color:var(--text3)`;
+    if (lvl <= 2) return `color:var(--text2)`;
+    if (lvl <= 3) return `color:#ca8a04;font-weight:600`;
+    return `color:#dc2626;font-weight:700`;
+  }
+
+  const pollenHtml = `<div style="font-size:.78rem;margin:10px 0 8px;line-height:1.6">
+    🌿 <span style="${pollenStyle(pB)}">Bříza ${pB}/5</span> &middot;
+    <span style="${pollenStyle(pG)}">Trávy ${pG}/5</span> &middot;
+    <span style="${pollenStyle(pA)}">Olše ${pA}/5</span>
+  </div>`;
+
+  // Sport chip based on worst (max) AQI of all 3 slots
   let sc, sl;
-  if (aqi <= 40) { sc='s-ok';  sl='Dobrý den pro sport venku'; }
-  else if (aqi <= 60) { sc='s-cau'; sl='Sport venku s opatrností'; }
-  else { sc='s-no'; sl='Raději sport uvnitř'; }
+  if (maxAqi <= 40) { sc='s-ok';  sl='Sport venku bez obav'; }
+  else if (maxAqi <= 60) { sc='s-cau'; sl='Sport venku s opatrností'; }
+  else if (maxAqi <= 80) { sc='s-no';  sl='Raději sport dovnitř'; }
+  else { sc='s-no'; sl='Stop pro venkovní aktivity'; }
 
   el.style.display = 'block';
-  el.innerHTML = `<div class="panel ${cls}">
-    <div class="panel-lbl">🌬️ Kvalita ovzduší</div>
-    <div class="aqi-top">
-      <div class="aqi-left">
-        <span class="aqi-num">${aqi}</span>
-        <span class="aqi-word">${label}</span>
+  el.innerHTML = `<div class="panel">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:1.3rem;line-height:1;flex-shrink:0">${icon}</span>
+      <span style="font-size:1rem;font-weight:700;color:${color};white-space:nowrap">${label}</span>
+      <div style="flex:1;position:relative;height:8px;border-radius:50px;background:linear-gradient(to right,#16a34a,#84cc16,#eab308,#f97316,#dc2626,#7c3aed);min-width:40px">
+        <div style="position:absolute;top:50%;left:${pct}%;transform:translate(-50%,-50%);width:14px;height:14px;background:var(--card);border:2.5px solid ${color};border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div>
       </div>
-      <div class="aqi-icn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.7 7.7a2.5 2.5 0 111.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1111 8H2"/><path d="M12.6 19.4A2 2 0 1114 16H2"/></svg>
-      </div>
+      <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;flex-shrink:0">(AQI ${maxAqi})</span>
     </div>
-    <div class="aqi-desc">${desc}</div>
-    <div class="aqi-track"><div class="aqi-fill" style="width:${pct}%"></div></div>
-    <div class="aqi-scale"><span>0</span><span>50</span><span>100+</span></div>
+    <div style="font-size:.82rem;color:var(--text2);line-height:1.55;margin-bottom:4px">${motivText}${timingNote}</div>
     ${pollenHtml}
-    <div style="margin-top:10px"><span class="sport-chip ${sc}">${sl}</span></div>
+    <div style="margin-top:6px"><span class="sport-chip ${sc}">${sl}</span></div>
   </div>`;
 }
 
+// ─── AQI chip for cards ───────────────────────────────────────
+function makeAqiChip(slotAq) {
+  if (!slotAq || slotAq.aqi === null) return '';
+  const lvl = aqiLevel(slotAq.aqi);
+  return `<span class="chip chip-aqi-${lvl}">${rand(AQI_CHIP[lvl])}</span>`;
+}
+
 // ─── Make card ────────────────────────────────────────────────
-function makeCard(slot, isActive) {
+function makeCard(slot, isActive, slotAq) {
   const cls = colorClass(slot.temp);
   const clothing = getClothing(slot.temp, slot.feels, slot.code);
   const sign = n => n > 0 ? '+' : '';
@@ -763,6 +872,8 @@ function makeCard(slot, isActive) {
   if (slot.wind   > 20) extra.push(`<span class="chip chip-wind">Vítr ${slot.wind} km/h</span>`);
   if (slot.precip > 30) extra.push(`<span class="chip chip-rain">Déšť ${slot.precip}%</span>`);
   if (slot.uv     >  3) extra.push(`<span class="chip chip-uv">UV ${Math.round(slot.uv)}</span>`);
+
+  const aqChip = makeAqiChip(slotAq);
 
   const card = document.createElement('div');
   card.className = `card ${cls}${isActive ? ' active-slot' : ''}`;
@@ -787,6 +898,7 @@ function makeCard(slot, isActive) {
       <div class="chips">
         ${clothing.map(c=>`<span class="chip">${c}</span>`).join('')}
         ${extra.join('')}
+        ${aqChip}
       </div>
     </div>`;
   return card;
@@ -801,21 +913,25 @@ let activeTab='today';
 function renderTab() {
   const isT    = activeTab === 'today';
   const slots  = isT ? cachedToday    : cachedTomorrow;
-  const aq     = isT ? cachedAqToday  : cachedAqTomorrow;
+  const aqArr  = isT ? cachedAqToday  : cachedAqTomorrow;
   const sunrise= isT ? cachedSunrises[0] : cachedSunrises[1];
   const activeIdx = isT ? getCurrentSlotIndex(slots) : -1;
+
+  // Update date badge for the active tab
+  const today = new Date(), tom = new Date(today); tom.setDate(today.getDate()+1);
+  document.getElementById('date-badge').textContent = formatDate(isT ? today : tom);
 
   const app = document.getElementById('app');
   app.innerHTML = '';
   const cards = document.createElement('div');
   cards.className = 'cards';
-  slots.forEach((s, i) => cards.appendChild(makeCard(s, i === activeIdx)));
+  slots.forEach((s, i) => cards.appendChild(makeCard(s, i === activeIdx, aqArr ? aqArr[i] : null)));
   app.appendChild(cards);
 
-  renderAirQuality(aq);
+  renderAirQuality(aqArr);
 
   const tipEl = document.getElementById('tip-section');
-  const tips  = getTip(slots, sunrise, aq);
+  const tips  = getTip(slots, sunrise, aqArr);
   if (tips) {
     const lbl = isT ? 'Tipy na dnes' : 'Tipy na zítra';
     tipEl.style.display = 'block';
@@ -902,9 +1018,9 @@ async function init() {
 
     const todaySlots    = extractSlots(data, tS);
     const tomorrowSlots = extractSlots(data, tmS);
-    const mH            = getSlots()[0].hour;
-    const aqToday       = extractAirQuality(aqData, tS,  mH);
-    const aqTom         = extractAirQuality(aqData, tmS, mH);
+    const slots         = getSlots();
+    const aqToday       = extractAirQualityForSlots(aqData, tS,  slots);
+    const aqTom         = extractAirQualityForSlots(aqData, tmS, slots);
     const sunrises      = data.daily?.sunrise ?? [];
 
     render(todaySlots, tomorrowSlots, aqToday, aqTom, sunrises, cityName);
