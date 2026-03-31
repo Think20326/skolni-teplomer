@@ -125,53 +125,46 @@
       color:var(--text2);background:transparent;
       transition:background .25s,color .25s,box-shadow .25s;
     }
-    .tab-btn.active{background:var(--text);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}
-    .dark .tab-btn.active{color:#0f172a}
+    .tab-btn.active{background:#1e40af;color:#fff;box-shadow:0 2px 10px rgba(30,64,175,.3)}
+    .tab-btn.active:hover{background:#1e3a8a}
+    .dark .tab-btn.active{background:#60a5fa;color:#0f172a}
     .tab-inner{display:flex;flex-direction:column;align-items:center;gap:1px}
     .tab-label{font-size:.88rem;font-weight:600}
     .tab-date{font-size:.66rem;font-weight:400;opacity:.6}
 
     /* ── Cards ──────────────────────────────────────── */
-    .cards{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+    .cards{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
     .card{
-      border-radius:var(--r);padding:18px 20px;
+      border-radius:var(--r);padding:14px 18px;
       background:var(--card);
       backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       border:1px solid var(--card-border);
       box-shadow:var(--card-shadow);
-      transition:transform .15s;
+      transition:transform .15s,border-color .2s;
       position:relative;overflow:hidden;
-      display:flex;flex-direction:column;gap:12px;
+      display:flex;flex-direction:column;gap:0;
     }
     .card:active{transform:scale(.99)}
-    /* Left accent stripe only — no decorative circle behind icon */
-    .card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
-    .card.cold::after{background:var(--cold)}
-    .card.warm::after{background:var(--warm)}
-    .card.neutral::after{background:var(--neutral)}
-    .card.active-slot.cold{box-shadow:var(--card-shadow),0 0 0 2px rgba(59,130,246,.2);border-color:rgba(59,130,246,.3)}
-    .card.active-slot.warm{box-shadow:var(--card-shadow),0 0 0 2px rgba(249,115,22,.2);border-color:rgba(249,115,22,.3)}
-    .card.active-slot.neutral{box-shadow:var(--card-shadow),0 0 0 2px rgba(100,116,139,.2);border-color:rgba(100,116,139,.3)}
+    /* Active card: elegant border around whole card, no stripe */
+    .card.active-slot{border:1.5px solid rgba(30,64,175,.35);box-shadow:var(--card-shadow),0 2px 12px rgba(30,64,175,.08)}
+    .dark .card.active-slot{border-color:rgba(96,165,250,.3);box-shadow:var(--card-shadow),0 2px 12px rgba(96,165,250,.1)}
 
-    /* Card header row */
-    .card-hdr{display:flex;align-items:flex-start;justify-content:space-between}
-    .card-meta{display:flex;flex-direction:column;gap:2px}
-    .card-lbl{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px}
-    .card.cold .card-lbl{color:var(--cold)} .card.warm .card-lbl{color:var(--warm)} .card.neutral .card-lbl{color:var(--neutral)}
-    .card-time{font-size:1.05rem;font-weight:700;color:var(--text)}
-    .card-desc{font-size:.76rem;color:var(--text2)}
-    .card-wx-text{font-size:.76rem;color:var(--text2);margin-top:1px}
-    .wx-icon{width:56px;height:56px;flex-shrink:0}
-
-    /* Temp row */
-    .card-temp-row{display:flex;align-items:center;justify-content:space-between;margin-top:-4px}
-    .card-temp{font-size:2.2rem;font-weight:900;line-height:1}
+    /* 3-column body */
+    .card-body{display:flex;align-items:center;gap:0;padding-bottom:10px}
+    .card-col-l{flex:1;display:flex;flex-direction:column;gap:2px}
+    .card-col-m{flex:1;display:flex;flex-direction:column;align-items:center}
+    .card-col-r{display:flex;align-items:center;justify-content:flex-end}
+    .card-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text3)}
+    .card-time{font-size:.9rem;font-weight:700;color:var(--text)}
+    .card-desc{font-size:.71rem;color:var(--text2)}
+    .card-wx-text{font-size:.71rem;color:var(--text3)}
+    .card-temp{font-size:2.5rem;font-weight:900;line-height:1}
     .card.cold .card-temp{color:var(--cold)} .card.warm .card-temp{color:var(--warm)} .card.neutral .card-temp{color:var(--neutral)}
-    .card-feels{font-size:.7rem;color:var(--text3);margin-top:2px}
+    .card-feels{font-size:.68rem;color:var(--text3);margin-top:3px}
+    .wx-icon{width:50px;height:50px;flex-shrink:0}
 
-    /* Clothing */
-    .card-clothing{display:flex;flex-direction:column;gap:7px;padding-top:12px;border-top:1px solid var(--divider)}
-    .clothing-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--text3)}
+    /* Chips row */
+    .card-chips{padding-top:8px;border-top:1px solid var(--divider)}
     .chips{display:flex;flex-wrap:wrap;gap:5px}
     .chip{
       font-size:.72rem;font-weight:500;font-family:inherit;
@@ -426,15 +419,14 @@ function getSlots() {
   return SLOT_META.map((m, i) => ({ ...m, time: times[i], hour: timeToHour(times[i]) }));
 }
 
-// ─── Current slot index (today only) ─────────────────────────
-function getCurrentSlotIndex(slots) {
-  const now = new Date().getHours() * 60 + new Date().getMinutes();
-  let idx = -1;
-  slots.forEach((s, i) => {
-    const [h, m] = s.time.split(':').map(Number);
-    if (now >= h * 60 + m) idx = i;
-  });
-  return idx;
+// ─── Current slot index by fixed time window (today only) ────
+// 5:00–10:59 → 0 (ráno), 11:00–13:59 → 1 (poledne), 14:00–22:00 → 2 (odpoledne)
+function getCurrentSlotIndex() {
+  const h = new Date().getHours();
+  if (h >= 5  && h < 11) return 0;
+  if (h >= 11 && h < 14) return 1;
+  if (h >= 14 && h <= 22) return 2;
+  return -1;
 }
 
 // ─── Weather decode ───────────────────────────────────────────
@@ -878,23 +870,20 @@ function makeCard(slot, isActive, slotAq) {
   const card = document.createElement('div');
   card.className = `card ${cls}${isActive ? ' active-slot' : ''}`;
   card.innerHTML = `
-    <div class="card-hdr">
-      <div class="card-meta">
+    <div class="card-body">
+      <div class="card-col-l">
         <div class="card-lbl">${slot.label}</div>
         <div class="card-time">${slot.time}</div>
         <div class="card-desc">${slot.desc}</div>
         <div class="card-wx-text">${slot.wxText}</div>
       </div>
-      ${wxSvg(slot.wxType)}
-    </div>
-    <div class="card-temp-row">
-      <div>
+      <div class="card-col-m">
         <div class="card-temp">${sign(slot.temp)}${slot.temp}°</div>
         <div class="card-feels">Pocitově ${sign(slot.feels)}${slot.feels}°C</div>
       </div>
+      <div class="card-col-r">${wxSvg(slot.wxType)}</div>
     </div>
-    <div class="card-clothing">
-      <div class="clothing-lbl">Oblečte dítě:</div>
+    <div class="card-chips">
       <div class="chips">
         ${clothing.map(c=>`<span class="chip">${c}</span>`).join('')}
         ${extra.join('')}
@@ -915,7 +904,7 @@ function renderTab() {
   const slots  = isT ? cachedToday    : cachedTomorrow;
   const aqArr  = isT ? cachedAqToday  : cachedAqTomorrow;
   const sunrise= isT ? cachedSunrises[0] : cachedSunrises[1];
-  const activeIdx = isT ? getCurrentSlotIndex(slots) : -1;
+  const activeIdx = isT ? getCurrentSlotIndex() : -1;
 
   // Update date badge for the active tab
   const today = new Date(), tom = new Date(today); tom.setDate(today.getDate()+1);
