@@ -25,6 +25,11 @@
   <meta name="twitter:description" content="Teplota pro cestu do školy a ze školy. Oblečte dítě správně, každý den.">
   <meta name="twitter:image" content="https://skolniteplomer.cz/og-image.png">
 
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1e3a5f">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1117,5 +1122,10 @@ init();
 </script>
 <script data-goatcounter="https://skolniteplomer.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
 </body>
 </html>
