@@ -287,6 +287,42 @@
     .social-icons{display:flex;justify-content:center;gap:20px}
     .social-icon{display:inline-flex;transition:transform .2s}
     .social-icon:hover{transform:scale(1.15)}
+
+    /* PWA Install Banner */
+    #pwa-banner{
+      display:none;
+      position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);
+      width:calc(100% - 32px);max-width:480px;
+      background:rgba(219,234,254,.97);
+      border:1px solid rgba(147,197,253,.6);
+      border-radius:14px;
+      box-shadow:0 4px 20px rgba(30,58,138,.13),0 1px 4px rgba(0,0,0,.06);
+      padding:12px 44px 12px 14px;
+      z-index:9999;
+      font-size:.85rem;font-weight:500;color:#1e3a5f;
+      line-height:1.4;
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
+      opacity:0;
+    }
+    .dark #pwa-banner{
+      background:rgba(15,23,42,.92);
+      border-color:rgba(59,130,246,.25);
+      color:#bfdbfe;
+    }
+    #pwa-banner.visible{
+      transform:translateX(-50%) translateY(0);
+      opacity:1;
+    }
+    #pwa-banner-close{
+      position:absolute;top:8px;right:10px;
+      background:none;border:none;cursor:pointer;
+      font-size:1.1rem;line-height:1;color:#64748b;padding:4px;
+      transition:color .15s;
+    }
+    #pwa-banner-close:hover{color:#1e3a5f}
+    .dark #pwa-banner-close{color:#64748b}
+    .dark #pwa-banner-close:hover{color:#bfdbfe}
   </style>
 </head>
 <body>
@@ -1126,6 +1162,37 @@ init();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
+</script>
+<div id="pwa-banner" role="status" aria-live="polite">
+  <button id="pwa-banner-close" aria-label="Zavřít">×</button>
+  <span id="pwa-banner-text"></span>
+</div>
+<script>
+(function(){
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  var isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isStandalone || !isMobile) return;
+  if (localStorage.getItem('pwa-banner-closed')) return;
+
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var text = isIOS
+    ? '📱 Přidejte si na plochu: \u2b06\ufe0f → Přidat na plochu'
+    : '📱 Přidejte si na plochu: ⋮ → Nainstalovat aplikaci';
+
+  var banner = document.getElementById('pwa-banner');
+  var textEl = document.getElementById('pwa-banner-text');
+  textEl.textContent = text;
+  banner.style.display = 'block';
+
+  setTimeout(function(){ banner.classList.add('visible'); }, 3000);
+
+  document.getElementById('pwa-banner-close').addEventListener('click', function(){
+    banner.classList.remove('visible');
+    banner.addEventListener('transitionend', function(){ banner.style.display = 'none'; }, {once:true});
+    localStorage.setItem('pwa-banner-closed', '1');
+  });
+})();
 </script>
 </body>
 </html>
