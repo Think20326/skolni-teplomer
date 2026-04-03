@@ -289,40 +289,16 @@
     .social-icon:hover{transform:scale(1.15)}
 
     /* PWA Install Banner */
-    #pwa-banner{
-      display:none;
-      position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);
-      width:calc(100% - 32px);max-width:480px;
-      background:rgba(219,234,254,.97);
-      border:1px solid rgba(147,197,253,.6);
-      border-radius:14px;
-      box-shadow:0 4px 20px rgba(30,58,138,.13),0 1px 4px rgba(0,0,0,.06);
-      padding:12px 44px 12px 14px;
-      z-index:9999;
-      font-size:.85rem;font-weight:500;color:#1e3a5f;
-      line-height:1.4;
-      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-      transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
-      opacity:0;
-    }
-    .dark #pwa-banner{
-      background:rgba(15,23,42,.92);
-      border-color:rgba(59,130,246,.25);
-      color:#bfdbfe;
-    }
-    #pwa-banner.visible{
-      transform:translateX(-50%) translateY(0);
-      opacity:1;
-    }
-    #pwa-banner-close{
-      position:absolute;top:8px;right:10px;
-      background:none;border:none;cursor:pointer;
-      font-size:1.1rem;line-height:1;color:#64748b;padding:4px;
-      transition:color .15s;
-    }
-    #pwa-banner-close:hover{color:#1e3a5f}
-    .dark #pwa-banner-close{color:#64748b}
-    .dark #pwa-banner-close:hover{color:#bfdbfe}
+    #pwa-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;opacity:0;pointer-events:none;transition:opacity 0.3s}
+    #pwa-overlay.visible{opacity:1;pointer-events:auto}
+    #pwa-banner{position:fixed;bottom:0;left:0;width:100%;background:#1e3a5f;color:#ffffff;border-radius:20px 20px 0 0;padding:24px 20px 28px 20px;z-index:9999;transform:translateY(100%);transition:transform 0.4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 -4px 20px rgba(0,0,0,0.2)}
+    #pwa-banner.visible{transform:translateY(0)}
+    #pwa-banner-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#ffffff;font-size:1.8rem;padding:12px;cursor:pointer;opacity:0.7;transition:opacity 0.15s;line-height:1}
+    #pwa-banner-close:hover{opacity:1}
+    .pwa-banner-title{font-size:1.2rem;font-weight:700;margin-bottom:10px}
+    .pwa-banner-steps{font-size:1rem;font-weight:400;opacity:0.9;margin-bottom:10px;line-height:1.5}
+    .pwa-banner-steps svg{display:inline-block;vertical-align:middle;margin:0 4px;width:20px;height:20px}
+    .pwa-banner-footer{font-size:0.95rem;opacity:0.75}
   </style>
 </head>
 <body>
@@ -1163,35 +1139,46 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
 </script>
-<div id="pwa-banner" role="status" aria-live="polite">
-  <button id="pwa-banner-close" aria-label="Zavřít">×</button>
-  <span id="pwa-banner-text"></span>
+<div id="pwa-overlay"></div>
+<div id="pwa-banner">
+  <button id="pwa-banner-close" aria-label="Zavřít">✕</button>
+  <div class="pwa-banner-title">📱 Tip: Mějte Školní teploměr jako appku na ploše!</div>
+  <div class="pwa-banner-steps" id="pwa-steps"></div>
+  <div class="pwa-banner-footer">Pak stačí kliknout na nejhezčí ikonku T a je to 😊</div>
 </div>
 <script>
 (function(){
   var isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true;
-  var isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isMobile = window.matchMedia('(max-width: 768px)').matches
+    || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   if (isStandalone || !isMobile) return;
-  if (localStorage.getItem('pwa-banner-closed')) return;
+  if (localStorage.getItem('pwa-banner-dismissed')) return;
 
-  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var text = isIOS
-    ? '📱 Přidejte si na plochu: \u2b06\ufe0f → Přidat na plochu'
-    : '📱 Přidejte si na plochu: ⋮ → Nainstalovat aplikaci';
+  var isIOS = /iPhone|iPad/i.test(navigator.userAgent);
+  var stepsEl = document.getElementById('pwa-steps');
+  if (isIOS) {
+    stepsEl.innerHTML = 'Klikněte na <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> (sdílení dole) \u2192 \u201ePřidat na plochu\u201c';
+  } else {
+    stepsEl.innerHTML = 'Klikněte na <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg> \u2192 (Více \u2192) \u201ePřidat na plochu\u201c';
+  }
 
   var banner = document.getElementById('pwa-banner');
-  var textEl = document.getElementById('pwa-banner-text');
-  textEl.textContent = text;
-  banner.style.display = 'block';
+  var overlay = document.getElementById('pwa-overlay');
 
-  setTimeout(function(){ banner.classList.add('visible'); }, 3000);
-
-  document.getElementById('pwa-banner-close').addEventListener('click', function(){
+  function closeBanner() {
     banner.classList.remove('visible');
-    banner.addEventListener('transitionend', function(){ banner.style.display = 'none'; }, {once:true});
-    localStorage.setItem('pwa-banner-closed', '1');
-  });
+    overlay.classList.remove('visible');
+    localStorage.setItem('pwa-banner-dismissed', 'true');
+  }
+
+  setTimeout(function(){
+    banner.classList.add('visible');
+    overlay.classList.add('visible');
+  }, 3000);
+
+  document.getElementById('pwa-banner-close').addEventListener('click', closeBanner);
+  overlay.addEventListener('click', closeBanner);
 })();
 </script>
 </body>
