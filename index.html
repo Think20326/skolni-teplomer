@@ -279,6 +279,8 @@
     .btn-s{background:transparent;color:var(--text2);border:1px solid var(--divider);border-radius:10px;padding:9px 16px;font-size:.87rem;font-weight:600;font-family:inherit;cursor:pointer}
     .modal-err{font-size:.74rem;color:#ef4444;margin-bottom:4px;display:none}
 
+    .hdr-holiday{font-size:.75rem;color:var(--text3);font-weight:400;margin-top:1px}
+    .hdr-subtitle{font-size:.72rem;color:var(--text3);margin-top:2px}
     footer{margin-top:24px;font-size:.7rem;color:var(--text3);text-align:center}
     footer a{color:var(--text3)}
     .social-section{margin-bottom:8px}
@@ -334,6 +336,8 @@
         </button>
       </div>
       <div class="hdr-date" id="date-badge">—</div>
+      <div class="hdr-holiday" id="hdr-holiday" style="display:none"></div>
+      <div class="hdr-subtitle" id="hdr-subtitle">Teplota pro cestu do školy a ze školy</div>
     </div>
     <div class="hdr-right">
       <button class="icn" id="settings-btn" title="Nastavit časy" style="display:none" onclick="openSettings()" aria-label="Nastavit časy">
@@ -423,6 +427,47 @@ function toggleTheme() {
 // ─── Random helper ────────────────────────────────────────────
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+// ─── School day detection ──────────────────────────────────────
+function getEaster(year) {
+  const a=year%19, b=Math.floor(year/100), c=year%100;
+  const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+  const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+  const m=Math.floor((a+11*h+22*l)/451);
+  const mo=Math.floor((h+l-7*m+114)/31), dy=((h+l-7*m+114)%31)+1;
+  return new Date(year, mo-1, dy);
+}
+
+function getCzechHoliday(date) {
+  const d=date.getDate(), mo=date.getMonth()+1, y=date.getFullYear();
+  const FIXED={
+    '1/1':'Nový rok','1/5':'Svátek práce','8/5':'Den vítězství',
+    '5/7':'Den slovanských věrozvěstů Cyrila a Metoděje',
+    '6/7':'Den upálení mistra Jana Husa',
+    '28/9':'Den české státnosti',
+    '28/10':'Den vzniku samostatného československého státu',
+    '17/11':'Den boje za svobodu a demokracii',
+    '24/12':'Štědrý den','25/12':'1. svátek vánoční','26/12':'2. svátek vánoční'
+  };
+  const k=`${d}/${mo}`;
+  if (FIXED[k]) return FIXED[k];
+  const easter=getEaster(y);
+  const gf=new Date(easter); gf.setDate(easter.getDate()-2);
+  const em=new Date(easter); em.setDate(easter.getDate()+1);
+  if (d===gf.getDate()&&mo===gf.getMonth()+1) return 'Velký pátek';
+  if (d===em.getDate()&&mo===em.getMonth()+1) return 'Velikonoční pondělí';
+  return null;
+}
+
+function isSchoolDay(date) {
+  const day=date.getDay();
+  if (day===0||day===6) return false;
+  const mo=date.getMonth();
+  if (mo===6||mo===7) return false;
+  if (getCzechHoliday(date)) return false;
+  return true;
+}
+
 // ─── AQI motivational texts (6 levels: 0-20, 21-40, 41-60, 61-80, 81-100, 100+) ──
 const AQI_MOT = [
   ["Vzduch jako v lese! Ideální čas na pořádný trénink nebo odpoledne s dětmi na hřišti.","Vzduch je dnes jako z hor. Ven s dětmi, ať si to užijí!","Parádní vzduch — kola, koloběžky, hřiště, dneska je to bez limitu","Lepší vzduch dnes nenajdete. Ideální den vyběhnout ven.","Plíce si dnes zazpívají. Tohle je den na hřiště od rána do večera.","Vzduch jak na horské louce. Škoda sedět doma, ven s tím!","Dneska se dýchá jako v pohádce. Kdo nesportuje, ten prohloupí."],
@@ -443,6 +488,27 @@ const AQI_CHIP = [
   ["STOP. Ven dnes ani krok.","Nedýchatelno. Zůstaňte doma.","Červený alarm. Dveře zavřít!","Nebezpečný vzduch. Žádné ven.","Nouzový režim. Zůstaňte uvnitř.","Toxický vzduch. Absolutní stop."]
 ];
 
+// ─── School/free-day AQI text helpers ─────────────────────────
+// Level-1 free-day alternatives for texts containing "škol"
+const AQI_MOT_FREE_1 = [
+  "Skvělá zpráva: Vzduch je čistý. Ideální na výlet pěšky nebo fotbálek venku.",
+  "Dneska se venku dýchá dobře. Na procházku nebo výlet? Jasně!",
+  "Dýchá se fajn. Na kole to dnes bude sázka na jistotu.",
+];
+const AQI_CHIP_FREE_1 = [
+  "Vzduch OK — fotbálek venku bez obav",
+];
+function randAqiMot(level, schoolDay) {
+  if (level!==1) return rand(AQI_MOT[level]);
+  if (schoolDay) return rand(AQI_MOT[1]);
+  return rand([...AQI_MOT[1].filter(t=>!/škol/i.test(t)), ...AQI_MOT_FREE_1]);
+}
+function randAqiChip(level, schoolDay) {
+  if (level!==1) return rand(AQI_CHIP[level]);
+  if (schoolDay) return rand(AQI_CHIP[1]);
+  return rand([...AQI_CHIP[1].filter(t=>!/škol/i.test(t)), ...AQI_CHIP_FREE_1]);
+}
+
 // ─── Pollen tip texts (4 levels: 2/5, 3/5, 4/5, 5/5) ─────────
 const POLLEN_TEXTS = [
   ["Lehký pylový nádech ve vzduchu. Nic dramatického, ale citlivé nosy to poznají.","Pyly trochu poletují. Kapesník do kapsy!","Mírné pyly v ovzduší. Alergici, hlídáme vám to (:","Pyly se probouzí. Nic vážného, ale kdo ví, ten nosí kapesník.","Lehký pylový koktejl ve vzduchu. Většině lidí to nevadí, alergici to ucítí."],
@@ -454,11 +520,18 @@ const POLLEN_TEXTS = [
 // ─── Slot config ──────────────────────────────────────────────
 const LS_KEY = 'skolni-teplomer-v3';
 const DEF_TIMES = ['08:00','12:00','16:00'];
-const SLOT_META = [
-  { label:'Ráno',      desc:'Cesta DO školy' },
-  { label:'Poledne',   desc:'Přestávka'       },
-  { label:'Odpoledne', desc:'Cesta ZE školy'  },
-];
+function getSlotMeta(schoolDay) {
+  if (schoolDay) return [
+    { label:'Ráno',      desc:'Cesta DO školy' },
+    { label:'Poledne',   desc:'Přestávka'       },
+    { label:'Odpoledne', desc:'Cesta ZE školy'  },
+  ];
+  return [
+    { label:'Ráno',      desc:'Ranní výprava'   },
+    { label:'Poledne',   desc:'Oběd'            },
+    { label:'Odpoledne', desc:'Odpolední výlet' },
+  ];
+}
 
 function loadTimes() {
   try {
@@ -473,9 +546,9 @@ function timeToHour(t) {
   return m >= 30 ? Math.min(h + 1, 23) : h;
 }
 
-function getSlots() {
+function getSlots(date) {
   const times = loadTimes();
-  return SLOT_META.map((m, i) => ({ ...m, time: times[i], hour: timeToHour(times[i]) }));
+  return getSlotMeta(isSchoolDay(date||new Date())).map((m,i) => ({...m, time:times[i], hour:timeToHour(times[i])}));
 }
 
 // ─── Current slot index by fixed time window (today only) ────
@@ -842,8 +915,8 @@ async function fetchAirQuality(lat, lon) {
   } catch { return null; }
 }
 
-function extractSlots(data, dayStr) {
-  const slots  = getSlots();
+function extractSlots(data, dayStr, date) {
+  const slots  = getSlots(date);
   const times  = data.hourly.time;
   const temps  = data.hourly.temperature_2m;
   const feels  = data.hourly.apparent_temperature;
@@ -881,7 +954,7 @@ function extractAirQualityForSlots(aqData, dayStr, slots) {
 }
 
 // ─── Render air quality (new design) ─────────────────────────
-function renderAirQuality(aqArray) {
+function renderAirQuality(aqArray, schoolDay) {
   const el = document.getElementById('air-section');
   if (!aqArray) { el.style.display='none'; el.innerHTML=''; return; }
   const validAqs = aqArray.filter(a => a && a.aqi !== null);
@@ -903,7 +976,7 @@ function renderAirQuality(aqArray) {
   const pct = Math.min(98, Math.max(2, (maxAqi / 150) * 100));
 
   // Random motivational text
-  const motivText = rand(AQI_MOT[lvl]);
+  const motivText = randAqiMot(lvl, schoolDay);
 
   // Timing note based on morning vs afternoon AQI
   const morningAqi = aqArray[0]?.aqi ?? 0;
@@ -959,14 +1032,14 @@ function renderAirQuality(aqArray) {
 }
 
 // ─── AQI chip for cards ───────────────────────────────────────
-function makeAqiChip(slotAq) {
+function makeAqiChip(slotAq, schoolDay) {
   if (!slotAq || slotAq.aqi === null) return '';
   const lvl = aqiLevel(slotAq.aqi);
-  return `<span class="chip chip-aqi-${lvl}">${rand(AQI_CHIP[lvl])}</span>`;
+  return `<span class="chip chip-aqi-${lvl}">${randAqiChip(lvl, schoolDay)}</span>`;
 }
 
 // ─── Make card ────────────────────────────────────────────────
-function makeCard(slot, isActive, slotAq) {
+function makeCard(slot, isActive, slotAq, schoolDay) {
   const cls = colorClass(slot.temp);
   const clothing = getClothing(slot.temp, slot.feels, slot.code);
   const sign = n => n > 0 ? '+' : '';
@@ -976,7 +1049,7 @@ function makeCard(slot, isActive, slotAq) {
   if (slot.precip > 30) extra.push(`<span class="chip chip-rain">Déšť ${slot.precip}%</span>`);
   if (slot.uv     >  3) extra.push(`<span class="chip chip-uv">UV ${Math.round(slot.uv)}</span>`);
 
-  const aqChip = makeAqiChip(slotAq);
+  const aqChip = makeAqiChip(slotAq, schoolDay);
 
   const card = document.createElement('div');
   card.className = `card ${cls}${isActive ? ' active-slot' : ''}`;
@@ -1019,16 +1092,26 @@ function renderTab() {
 
   // Update date badge for the active tab
   const today = new Date(), tom = new Date(today); tom.setDate(today.getDate()+1);
-  document.getElementById('date-badge').textContent = formatDate(isT ? today : tom);
+  const displayDate = isT ? today : tom;
+  document.getElementById('date-badge').textContent = formatDate(displayDate);
+
+  // Holiday name and subtitle
+  const schoolDay = isSchoolDay(displayDate);
+  const holidayName = getCzechHoliday(displayDate);
+  const holidayEl = document.getElementById('hdr-holiday');
+  holidayEl.textContent = holidayName || '';
+  holidayEl.style.display = holidayName ? '' : 'none';
+  document.getElementById('hdr-subtitle').textContent =
+    schoolDay ? 'Teplota pro cestu do školy a ze školy' : 'Počasí na celý den';
 
   const app = document.getElementById('app');
   app.innerHTML = '';
   const cards = document.createElement('div');
   cards.className = 'cards';
-  slots.forEach((s, i) => cards.appendChild(makeCard(s, i === activeIdx, aqArr ? aqArr[i] : null)));
+  slots.forEach((s, i) => cards.appendChild(makeCard(s, i === activeIdx, aqArr ? aqArr[i] : null, schoolDay)));
   app.appendChild(cards);
 
-  renderAirQuality(aqArr);
+  renderAirQuality(aqArr, schoolDay);
 
   const tipEl = document.getElementById('tip-section');
   const tips  = getTip(slots, sunrise, aqArr);
@@ -1116,9 +1199,9 @@ async function init() {
     const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
     const tS=dateStr(today), tmS=dateStr(tom);
 
-    const todaySlots    = extractSlots(data, tS);
-    const tomorrowSlots = extractSlots(data, tmS);
-    const slots         = getSlots();
+    const todaySlots    = extractSlots(data, tS,  today);
+    const tomorrowSlots = extractSlots(data, tmS, tom);
+    const slots         = getSlots(today);
     const aqToday       = extractAirQualityForSlots(aqData, tS,  slots);
     const aqTom         = extractAirQualityForSlots(aqData, tmS, slots);
     const sunrises      = data.daily?.sunrise ?? [];
