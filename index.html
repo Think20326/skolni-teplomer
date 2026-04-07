@@ -385,7 +385,7 @@
         </a>
       </div>
     </div>
-    <div>Data: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> &bull; Aktualizováno: <span id="updated-at">—</span></div>
+    <div>Data: <a id="data-source-link" href="https://open-meteo.com/" target="_blank"><span id="data-source-name">Open-Meteo</span></a> &bull; Aktualizováno: <span id="updated-at">—</span></div>
   </footer>
 </div>
 
@@ -572,6 +572,29 @@ function decodeWeather(code) {
   if ([71,73,75,77,85,86].includes(code)) return 'snowy';
   if ([95,96,99].includes(code))          return 'storm';
   return 'cloudy';
+}
+
+// ─── OWM → WMO code mapping ───────────────────────────────────
+function owmToWmo(id) {
+  if (id === 800) return 0;
+  if (id === 801) return 1;
+  if (id === 802) return 2;
+  if (id === 803 || id === 804) return 3;
+  if ([701,711,721,731,741].includes(id)) return 45;
+  if (id >= 300 && id <= 302) return 51;
+  if (id >= 310 && id <= 321) return 53;
+  if (id === 500) return 61;
+  if (id === 501) return 63;
+  if (id >= 502 && id <= 504) return 65;
+  if (id === 511) return 66;
+  if (id >= 520 && id <= 531) return 80;
+  if (id === 600) return 71;
+  if (id === 601) return 73;
+  if (id === 602) return 75;
+  if (id >= 611 && id <= 616) return 77;
+  if (id >= 620 && id <= 622) return 85;
+  if (id >= 200 && id <= 232) return 95;
+  return 3; // default cloudy
 }
 
 function weatherText(code) {
@@ -898,15 +921,29 @@ async function reverseGeocode(lat, lon) {
   } catch { return null; }
 }
 
-// ─── Weather API ───────────────────────────────────────────────
+// ─── Weather API (Open-Meteo + OWM fallback) ──────────────────
 async function fetchWeather(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast`
-    + `?latitude=${lat}&longitude=${lon}`
-    + `&hourly=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,wind_gusts_10m,precipitation_probability,visibility,uv_index`
-    + `&daily=sunrise,sunset&timezone=Europe%2FPrague&forecast_days=2&wind_speed_unit=ms`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('Chyba API: ' + r.status);
-  return r.json();
+  const ctl = new AbortController();
+  const tid = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast`
+      + `?latitude=${lat}&longitude=${lon}`
+      + `&hourly=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,wind_gusts_10m,precipitation_probability,visibility,uv_index`
+      + `&daily=sunrise,sunset&timezone=Europe%2FPrague&forecast_days=2&wind_speed_unit=ms`;
+    const r = await fetch(url, { signal: ctl.signal });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return { source: 'open-meteo', data: await r.json() };
+  } catch(e) {
+    clearTimeout(tid);
+    console.warn('Open-Meteo selhal, přepínám na OWM:', e.message);
+    const owmUrl = `https://api.openweathermap.org/data/2.5/forecast`
+      + `?lat=${lat}&lon=${lon}&units=metric&lang=cs`
+      + `&appid=d1bdebdb728d261ae778fcb4cd6d4b22`;
+    const r = await fetch(owmUrl);
+    if (!r.ok) throw new Error('OWM HTTP ' + r.status);
+    return { source: 'owm', data: await r.json() };
+  }
 }
 
 async function fetchAirQuality(lat, lon) {
@@ -936,6 +973,31 @@ function extractSlots(data, dayStr, date) {
       code:codes[idx], wxType:decodeWeather(codes[idx]), wxText:weatherText(codes[idx]),
       wind:Math.round(winds[idx]??0), gusts:Math.round(gusts[idx]??0),
       precip:precip[idx]??0, vis:vis[idx]??10000, uv:uv[idx]??0 };
+  });
+}
+
+// ─── OWM data → slot format (same as extractSlots) ───────────
+function parseOWMSlots(list, dayStr, date) {
+  const slots = getSlots(date);
+  return slots.map(slot => {
+    const targetTs = new Date(`${dayStr}T${String(slot.hour).padStart(2,'0')}:00`).getTime() / 1000;
+    const entry = list.reduce((best, e) =>
+      Math.abs(e.dt - targetTs) < Math.abs(best.dt - targetTs) ? e : best
+    );
+    const wmo = owmToWmo(entry.weather[0].id);
+    return {
+      ...slot,
+      temp:   Math.round(entry.main.temp),
+      feels:  Math.round(entry.main.feels_like),
+      code:   wmo,
+      wxType: decodeWeather(wmo),
+      wxText: weatherText(wmo),
+      wind:   Math.round(entry.wind?.speed ?? 0),
+      gusts:  Math.round(entry.wind?.gust  ?? 0),
+      precip: Math.round((entry.pop ?? 0) * 100),
+      vis:    entry.visibility ?? 10000,
+      uv:     0,
+    };
   });
 }
 
@@ -1196,19 +1258,31 @@ async function init() {
       cityName = loc.name || await reverseGeocode(loc.lat, loc.lon);
     }
 
-    const [data, aqData] = await Promise.all([fetchWeather(loc.lat,loc.lon), fetchAirQuality(loc.lat,loc.lon)]);
-
     const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
     const tS=dateStr(today), tmS=dateStr(tom);
 
-    const todaySlots    = extractSlots(data, tS,  today);
-    const tomorrowSlots = extractSlots(data, tmS, tom);
-    const slots         = getSlots(today);
-    const aqToday       = extractAirQualityForSlots(aqData, tS,  slots);
-    const aqTom         = extractAirQualityForSlots(aqData, tmS, slots);
-    const sunrises      = data.daily?.sunrise ?? [];
+    const [weatherResult, aqData] = await Promise.all([fetchWeather(loc.lat,loc.lon), fetchAirQuality(loc.lat,loc.lon)]);
+
+    let todaySlots, tomorrowSlots, sunrises;
+    if (weatherResult.source === 'open-meteo') {
+      todaySlots    = extractSlots(weatherResult.data, tS,  today);
+      tomorrowSlots = extractSlots(weatherResult.data, tmS, tom);
+      sunrises      = weatherResult.data.daily?.sunrise ?? [];
+    } else {
+      todaySlots    = parseOWMSlots(weatherResult.data.list, tS,  today);
+      tomorrowSlots = parseOWMSlots(weatherResult.data.list, tmS, tom);
+      sunrises      = [];
+    }
+
+    const slots   = getSlots(today);
+    const aqToday = extractAirQualityForSlots(aqData, tS,  slots);
+    const aqTom   = extractAirQualityForSlots(aqData, tmS, slots);
 
     render(todaySlots, tomorrowSlots, aqToday, aqTom, sunrises, cityName);
+
+    const isOWM = weatherResult.source === 'owm';
+    document.getElementById('data-source-link').href = isOWM ? 'https://openweathermap.org/' : 'https://open-meteo.com/';
+    document.getElementById('data-source-name').textContent = isOWM ? 'OpenWeatherMap (záloha)' : 'Open-Meteo';
   } catch(err) {
     const isNetErr = /networkerror|failed to fetch|load failed/i.test(err.message);
     const errMsg = isNetErr ? 'Server počasí je dočasně nedostupný.' : err.message;
