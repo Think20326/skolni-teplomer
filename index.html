@@ -519,6 +519,7 @@ const POLLEN_TEXTS = [
 
 // ─── Slot config ──────────────────────────────────────────────
 const LS_KEY = 'skolni-teplomer-v3';
+const LOC_KEY = 'skolni-teplomer-loc';
 const DEF_TIMES = ['08:00','12:00','16:00'];
 function getSlotMeta(schoolDay) {
   if (schoolDay) return [
@@ -842,7 +843,7 @@ function getTip(slots, sunrise, aqArray) {
 }
 
 // ─── Location / geocoding ─────────────────────────────────────
-let manualLocation = null;
+let manualLocation = (() => { try { return JSON.parse(localStorage.getItem(LOC_KEY)); } catch { return null; } })();
 
 function toggleCityForm(force) {
   const f = document.getElementById('city-form');
@@ -872,6 +873,7 @@ async function submitCity(e) {
   btn.textContent = 'Hledat'; btn.disabled = false;
   if (!loc) { err.style.display = 'block'; return; }
   manualLocation = loc;
+  localStorage.setItem(LOC_KEY, JSON.stringify(loc));
   toggleCityForm(false);
   document.getElementById('city-input').value = '';
   init();
@@ -1189,8 +1191,8 @@ async function init() {
     let loc, cityName;
     if (manualLocation) { loc=manualLocation; cityName=loc.name; }
     else {
-      loc = await getLocation();
       document.getElementById('loc-text').textContent = 'Zjišťuji polohu…';
+      loc = await getLocation();
       cityName = loc.name || await reverseGeocode(loc.lat, loc.lon);
     }
 
@@ -1208,7 +1210,9 @@ async function init() {
 
     render(todaySlots, tomorrowSlots, aqToday, aqTom, sunrises, cityName);
   } catch(err) {
-    document.getElementById('app').innerHTML = `<div class="err-box">⚠️ Nepodařilo se načíst počasí.<br><small>${err.message}</small><br><button class="retry-btn" onclick="init()">🔄 Zkusit znovu</button></div>`;
+    const isNetErr = /networkerror|failed to fetch|load failed/i.test(err.message);
+    const errMsg = isNetErr ? 'Server počasí je dočasně nedostupný.' : err.message;
+    document.getElementById('app').innerHTML = `<div class="err-box">⚠️ Nepodařilo se načíst počasí.<br><small>${errMsg}</small><br><button class="retry-btn" onclick="init()">🔄 Zkusit znovu</button></div>`;
     console.error(err);
   }
 }
