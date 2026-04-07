@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skolni-teplomer-v1';
+const CACHE_NAME = 'skolni-teplomer-v2';
 const ASSETS = [
   '/',
   '/index.html',
