@@ -977,13 +977,26 @@ function extractSlots(data, dayStr, date) {
 }
 
 // ─── OWM data → slot format (same as extractSlots) ───────────
-function parseOWMSlots(list, dayStr, date) {
+function parseOWMSlots(list, dayStr, date, lat, lon) {
   const slots = getSlots(date);
   return slots.map(slot => {
     const targetTs = new Date(`${dayStr}T${String(slot.hour).padStart(2,'0')}:00`).getTime() / 1000;
-    const entry = list.reduce((best, e) =>
-      Math.abs(e.dt - targetTs) < Math.abs(best.dt - targetTs) ? e : best
+
+    // Floor: latest entry whose dt is at or before the target time.
+    // Gives "current" conditions at departure, not future forecast.
+    // Falls back to earliest entry if all entries are after target.
+    const before = list.filter(e => e.dt <= targetTs);
+    const entry  = before.length
+      ? before.reduce((best, e) => e.dt > best.dt ? e : best)
+      : list.reduce((best, e) => e.dt < best.dt ? e : best);
+
+    // Diagnostic log for every slot
+    console.log(
+      `[OWM] ${slot.label} | cíl: ${new Date(targetTs*1000).toLocaleTimeString('cs-CZ')}` +
+      ` | záznam dt=${entry.dt} (${new Date(entry.dt*1000).toLocaleString('cs-CZ')})` +
+      ` | teplota: ${entry.main.temp}°C | lat=${lat ?? '?'} lon=${lon ?? '?'}`
     );
+
     const wmo = owmToWmo(entry.weather[0].id);
     return {
       ...slot,
@@ -1269,8 +1282,8 @@ async function init() {
       tomorrowSlots = extractSlots(weatherResult.data, tmS, tom);
       sunrises      = weatherResult.data.daily?.sunrise ?? [];
     } else {
-      todaySlots    = parseOWMSlots(weatherResult.data.list, tS,  today);
-      tomorrowSlots = parseOWMSlots(weatherResult.data.list, tmS, tom);
+      todaySlots    = parseOWMSlots(weatherResult.data.list, tS,  today, loc.lat, loc.lon);
+      tomorrowSlots = parseOWMSlots(weatherResult.data.list, tmS, tom,   loc.lat, loc.lon);
       sunrises      = [];
     }
 
