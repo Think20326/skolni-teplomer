@@ -468,6 +468,75 @@ function isSchoolDay(date) {
   return true;
 }
 
+// ─── Special days (name + optional message) ───────────────────
+const SPECIAL_DAYS = {
+  // With message
+  '21/3': { name:'Ponožkový den 🧦',
+            message:'Světový den Downova syndromu. Vezmi si pestré, nepárové ponožky.' },
+  '1/4':  { name:'Apríl 🐟', message: null }, // handled separately
+  '22/4': { name:'Den Země 🌍',
+            message:'Dnes to chce zelenou nebo modrou. A kus úcty k planetě.' },
+  '1/6':  { name:'Den dětí 🎈',
+            message:'Dnes je to celé o vás! Užijte si to.' },
+  '30/6': { name:'Vysvědčení 🏆',
+            message:'Kluci, čisté triko nebo košili! Princezny šaty. A jděte dřív, ať na vás zbyde to s jedničkami.' },
+  '1/9':  { name:'První školní den 🎒',
+            message:'Začínáme! Aktovku nachystanou, úsměv taky.' },
+  '5/12': { name:'Mikuláš 🎅',
+            message:'Dnes večer přijdou. Buďte hodný.' },
+  // Display only
+  '14/2': { name:'Valentýn 💝',                                           message: null },
+  '1/5':  { name:'Svátek práce / Den lásky 💐',                           message: null },
+  '8/5':  { name:'Den vítězství 🇨🇿',                                     message: null },
+  '28/10':{ name:'Den vzniku samostatného československého státu 🇨🇿',     message: null },
+  '31/10':{ name:'Halloween 🎃',                                           message: null },
+  '17/11':{ name:'Den boje za svobodu a demokracii 🕯️',                   message: null },
+  '24/12':{ name:'Štědrý den 🎄',                                          message: null },
+};
+
+function getSpecialDayInfo(date) {
+  const d = date.getDate(), mo = date.getMonth() + 1;
+  return SPECIAL_DAYS[`${d}/${mo}`] || null;
+}
+
+// ─── Weekday subtitle messages (0=Sun … 6=Sat, 4–5 variants) ──
+const WEEKDAY_SUBS = [
+  // 0 Sunday
+  ['Neděle – čas trochu zpomalit.', 'Nedělní pohoda. Počasí přeje?',
+   'Neděle patří rodině. A venku?'],
+  // 1 Monday
+  ['Pondělní start – co si vzít na sebe?', 'Nový týden, nová šance. Teplota pro cestu?',
+   'Pondělí. Tak jo. Aspoň počasí jsme si prověřili.',
+   'Pondělí se nedá přeskočit. Aspoň víme, co obléct.'],
+  // 2 Tuesday
+  ['Úterý – přes kopec? Aspoň počasí drží.',
+   'Úterní dávka počasí. Jdeme na to!',
+   'Úterý je nové pondělí. Počasí to ví.',
+   'Teplota pro cestu do školy a ze školy.'],
+  // 3 Wednesday
+  ['Polovina týdne! Počasí s vámi?', 'Středa – ještě kousek. Teplota pro cestu.',
+   'Středa vychází vstříc. I počasí.',
+   'Přelomový den týdne. Přelomové počasí?'],
+  // 4 Thursday
+  ['Čtvrtek – jeden den do pátku. Vydržíme!',
+   'Čtvrtek – na dohled víkendu!',
+   'Skoro pátek. Počasí to taky cítí.',
+   'Teplota pro cestu do školy a ze školy.'],
+  // 5 Friday
+  ['Pátek! Víkend čeká. Jak se jde ven?', 'Páteční počasí – a pak volno!',
+   'Svátek všech školáků. Počasí přeje?',
+   'Pátek je tu. Naposledy tento týden!'],
+  // 6 Saturday
+  ['Sobota – den pro výlety. Jde to?', 'Sobotní počasí. Kam dneska?',
+   'Sobota – čas být venku.'],
+];
+
+function getWeekdaySubtitle(date) {
+  const day = date.getDay();
+  const msgs = WEEKDAY_SUBS[day];
+  return msgs[date.getDate() % msgs.length];
+}
+
 // ─── AQI motivational texts (6 levels: 0-20, 21-40, 41-60, 61-80, 81-100, 100+) ──
 const AQI_MOT = [
   ["Vzduch jako v lese! Ideální čas na pořádný trénink nebo odpoledne s dětmi na hřišti.","Vzduch je dnes jako z hor. Ven s dětmi, ať si to užijí!","Parádní vzduch — kola, koloběžky, hřiště, dneska je to bez limitu","Lepší vzduch dnes nenajdete. Ideální den vyběhnout ven.","Plíce si dnes zazpívají. Tohle je den na hřiště od rána do večera.","Vzduch jak na horské louce. Škoda sedět doma, ven s tím!","Dneska se dýchá jako v pohádce. Kdo nesportuje, ten prohloupí."],
@@ -665,19 +734,53 @@ function wxSvg(type) {
 }
 
 // ─── Clothing — uses feels (apparent) temperature ─────────────
-function getClothing(temp, feels, code) {
+function getClothing(temp, feels, code, wind, precip) {
   const items = [];
   const isRain = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code);
   const isSnow = [71,73,75,77,85,86].includes(code);
 
-  if      (feels <= -10) items.push('Zimní bunda','Čepice','Rukavice','Šála');
-  else if (feels <=  -3) items.push('Zimní bunda','Čepice','Rukavice');
-  else if (feels <=   3) items.push('Teplá bunda','Čepice');
-  else if (feels <=   9) items.push('Bunda');
-  else if (feels <=  14) items.push('Lehká bunda');
-  else if (feels <=  19) items.push('Mikina');
-  else if (feels <=  26) items.push('Tričko');
-  else                   items.push('Lehké oblečení');
+  if (feels <= -10) {
+    items.push('Zimní bunda','Čepice','Rukavice','Šála');
+    items.push(rand(['❄️ Mráz pálí. Termoprádlo není volba, ale nutnost.',
+                     'Termoprádlo pod to – malý zázrak, co drží teplo.']));
+  } else if (feels <= -2) {
+    items.push('Zimní bunda','Čepice','Rukavice');
+    items.push('Termoprádlo pod to – malý zázrak, co drží teplo.');
+  } else if (feels <=  3) {
+    items.push('Teplá bunda','Čepice');
+  } else if (feels <= 10) {
+    items.push(rand([
+      'Přechodová bunda, mikina, legíny nebo punčocháče pod sukni.',
+      'Přechodová bunda, mikina, dlouhé kalhoty.',
+      'Ráno zima, po obědě se to zvedne. Mikina pod bundu.',
+    ]));
+  } else if (feels <= 13) {
+    items.push(rand([
+      'Lehká bunda, mikina, legíny nebo džíny.',
+      'Cibule rozhoduje – lehká bunda a ráno mikina navrch, odpoledne do batohu.',
+    ]));
+  } else if (feels <= 16) {
+    items.push(rand([
+      'Mikina, tričko s dlouhým, legíny nebo sukně s punčocháči.',
+      'Mikina, tričko s dlouhým, džíny.',
+      'Ráno mikina, odpoledne možná stačí triko.',
+    ]));
+  } else if (feels <= 19) {
+    items.push('Mikina');
+  } else if (feels <= 23) {
+    items.push(rand([
+      'Tričko s dlouhým rukávem, sukně nebo kraťasy. Lehká mikina na ráno.',
+      'Tričko, kraťasy nebo lehké kalhoty. Mikinu na ráno.',
+    ]));
+    // wind ≥ 7 m/s ≈ 25 km/h, precip ≥ 35 %
+    if ((wind != null && wind >= 7) || (precip != null && precip >= 35)) {
+      items.push('Fouká/prší – přidejte lehkou bundu, mikina nemusí stačit.');
+    }
+  } else if (feels <= 26) {
+    items.push('Tričko, sukně, kraťasy, šatičky.');
+  } else {
+    items.push('Lehké oblečení');
+  }
 
   if (isSnow && feels > -3) { items.push('Čepice'); items.push('Rukavice'); }
   if (isRain) items.push('Deštník');
@@ -731,6 +834,7 @@ const TIP_ICONS = {
   dark:   { bg:'#eef2ff', c:'#4f46e5', path:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' },
   air:    { bg:'#f0fdf4', c:'#16a34a', path:'<path d="M3 6h18M3 12h18M3 18h18"/>' },
   pollen: { bg:'#fefce8', c:'#a16207', path:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>' },
+  sport:  { bg:'#dcfce7', c:'#15803d', path:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>' },
 };
 
 function tipBadge(iconKey) {
@@ -749,6 +853,8 @@ function getTip(slots, sunrise, aqArray) {
   const maxUV     = Math.max(...slots.map(s => s.uv));
   const hasRain   = slots.some(s => s.precip > 50);
   const hasSnow   = slots.some(s => [71,73,75,77,85,86].includes(s.code));
+  const isSunny   = slots.some(s => [0,1,2].includes(s.code));
+  const month     = new Date().getMonth(); // 0-11
 
   if (m.feels < 0)
     tips.push({ icon:'frost', text:'Ráno mráz — zimní bunda, čepice a rukavice' });
@@ -765,8 +871,6 @@ function getTip(slots, sunrise, aqArray) {
 
   // Wind tips (wind in m/s after API wind_speed_unit=ms)
   {
-    const month = new Date().getMonth(); // 0-11, April=3, October=9
-    const isSunny = slots.some(s => [0,1,2].includes(s.code));
     if (maxWind >= 14) {
       const wt = [
         `⚠️ Pozor, silné nárazy větru (${maxGusts} m/s) — dejte pozor na cestě!`,
@@ -823,8 +927,27 @@ function getTip(slots, sunrise, aqArray) {
   if (hasSnow && m.feels >= 0)
     tips.push({ icon:'snow', text:'Sněží — rukavice a voděodolná obuv' });
 
-  if (maxUV > 5)
-    tips.push({ icon:'uv', text:`UV index ${Math.round(maxUV)} — nezapomeňte opalovací krém a kšiltovku` });
+  // UV protection — multi-level
+  if (maxUV > 7)
+    tips.push({ icon:'uv', text:`🧴 UV dnes fakt pálí (index ${Math.round(maxUV)}). Krém, klobouček, sluneční brýle – všechno.` });
+  else if (maxUV > 5 && isSunny)
+    tips.push({ icon:'uv', text:`☀️ UV index ${Math.round(maxUV)} — kšiltovka nebo klobouček. A krém s UV – sebe i dítě.` });
+  else if (maxUV > 5)
+    tips.push({ icon:'uv', text:`UV index ${Math.round(maxUV)} — nezapomeňte opalovací krém a kšiltovku.` });
+  if (slots.some(s => s.temp >= 25) && isSunny)
+    tips.push({ icon:'uv', text:'👡 Dnes to chce sandálky a letní šatičky.' });
+
+  // Sport activity recommendation
+  {
+    const avgTemp = slots.reduce((a,s)=>a+s.temp,0)/slots.length;
+    if (maxPrecip > 65 || maxWind > 11 || m.feels < -5) {
+      tips.push({ icon:'sport', text:'🔴 Dnes spíš tělocvična, bazén nebo bowling.' });
+    } else if (maxPrecip > 35 || maxWind > 7) {
+      tips.push({ icon:'sport', text:'🟡 Venku to jde, ale pláštěnku přibalte.' });
+    } else if (avgTemp >= 10 && avgTemp <= 28) {
+      tips.push({ icon:'sport', text:'🟢 Fotbal, kolo, hřiště, běh – dnes to vyjde.' });
+    }
+  }
 
   if (m.vis < 500)
     tips.push({ icon:'fog', text:'Ráno mlha — oblečte reflexní vestu nebo aspoň pásky!' });
@@ -1118,7 +1241,7 @@ function makeAqiChip(slotAq, schoolDay) {
 // ─── Make card ────────────────────────────────────────────────
 function makeCard(slot, isActive, slotAq, schoolDay) {
   const cls = colorClass(slot.temp);
-  const clothing = getClothing(slot.temp, slot.feels, slot.code);
+  const clothing = getClothing(slot.temp, slot.feels, slot.code, slot.wind, slot.precip);
   const sign = n => n > 0 ? '+' : '';
   const extra = [];
   if (slot.wind >= 14) extra.push(`<span class="chip chip-wind-warn">⚠️ Vítr ${slot.wind} m/s</span>`);
@@ -1159,6 +1282,7 @@ let cachedToday=null, cachedTomorrow=null;
 let cachedAqToday=null, cachedAqTomorrow=null;
 let cachedSunrises=[];
 let activeTab='today';
+let aprilFoolRevealed=false;
 
 function renderTab() {
   const isT    = activeTab === 'today';
@@ -1172,14 +1296,32 @@ function renderTab() {
   const displayDate = isT ? today : tom;
   document.getElementById('date-badge').textContent = formatDate(displayDate);
 
-  // Holiday name and subtitle
-  const schoolDay = isSchoolDay(displayDate);
-  const holidayName = getCzechHoliday(displayDate);
+  // Holiday / special day
+  const schoolDay   = isSchoolDay(displayDate);
+  const specialDay  = getSpecialDayInfo(displayDate);
+  const officialHol = getCzechHoliday(displayDate);
+  // Special day name takes precedence (has emojis); fall back to official
+  const dayName = (specialDay && specialDay.name) || officialHol || null;
   const holidayEl = document.getElementById('hdr-holiday');
-  holidayEl.textContent = holidayName || '';
-  holidayEl.style.display = holidayName ? '' : 'none';
-  document.getElementById('hdr-subtitle').textContent =
-    schoolDay ? 'Teplota pro cestu do školy a ze školy' : 'Počasí na celý den';
+  holidayEl.textContent = dayName || '';
+  holidayEl.style.display = dayName ? '' : 'none';
+
+  // Subtitle: special message > weekday variant > weekend fallback
+  const subtitleEl = document.getElementById('hdr-subtitle');
+  if (specialDay && specialDay.message) {
+    subtitleEl.textContent = specialDay.message;
+  } else if (schoolDay) {
+    subtitleEl.textContent = getWeekdaySubtitle(displayDate);
+  } else {
+    subtitleEl.textContent = 'Počasí na celý den';
+  }
+
+  // April Fools (today only, until user reveals)
+  const dD = displayDate.getDate(), moD = displayDate.getMonth() + 1;
+  if (isT && dD === 1 && moD === 4 && !aprilFoolRevealed) {
+    renderAprilFools();
+    return;
+  }
 
   const app = document.getElementById('app');
   app.innerHTML = '';
@@ -1205,6 +1347,32 @@ function renderTab() {
     tipEl.style.display = 'none';
     tipEl.innerHTML = '';
   }
+}
+
+function renderAprilFools() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="panel" style="text-align:center;padding:1.5rem 1rem">
+      <div class="panel-lbl" style="font-size:1rem;margin-bottom:.75rem">🌪️ Dnešní předpověď</div>
+      <div style="font-size:2rem;font-weight:700;color:var(--text1);line-height:1.2">
+        −20 °C / 36 °C
+      </div>
+      <div style="font-size:.82rem;color:var(--text2);margin:.4rem 0 .9rem">Ráno mráz pálí · Odpoledne vedro</div>
+      <div class="chips" style="justify-content:center;margin-bottom:.75rem">
+        <span class="chip">Kožich a plavky. Klidně oboje najednou.</span>
+      </div>
+      <div style="font-size:.8rem;color:var(--text3);padding:.6rem .9rem;background:var(--bg2);border-radius:8px;margin-bottom:1rem;line-height:1.5">
+        🌪️ Varování: Blíží se tornádo s vedrem.<br>Doporučujeme úkryt a zmrzlinu.
+      </div>
+      <button class="btn-p" onclick="revealRealForecast()">Chci skutečnou předpověď</button>
+    </div>`;
+  document.getElementById('tip-section').style.display = 'none';
+  document.getElementById('air-section').style.display = 'none';
+}
+
+function revealRealForecast() {
+  aprilFoolRevealed = true;
+  renderTab();
 }
 
 function switchTab(tab) {
