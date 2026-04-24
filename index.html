@@ -525,7 +525,7 @@ const WEEKDAY_SUBS = [
    'Skoro pátek. Počasí to taky cítí.',
    'Teplota pro cestu do školy a ze školy.'],
   // 5 Friday
-  ['Pátek! Víkend čeká. Jak se jde ven?', 'Páteční počasí – a pak volno!',
+  ['Pátek! Víkend čeká.', 'Páteční počasí – a pak volno!',
    'Svátek všech školáků. Počasí přeje?',
    'Pátek je tu. Naposledy tento týden!'],
   // 6 Saturday
@@ -845,7 +845,7 @@ function tipBadge(iconKey) {
 }
 
 // aqArray = array of 3 {aqi, birch, grass, alder} objects (one per slot)
-function getTip(slots, sunrise, aqArray) {
+function getTip(slots, sunrise, aqArray, date) {
   const tips = [];
   const m = slots[0], af = slots[2];
   const diff = af.temp - m.temp;
@@ -947,7 +947,11 @@ function getTip(slots, sunrise, aqArray) {
     } else if (maxPrecip > 35 || maxWind > 7) {
       tips.push({ icon:'sport', text:'🟡 Venku to jde, ale pláštěnku přibalte.' });
     } else if (avgTemp >= 10 && avgTemp <= 28) {
-      tips.push({ icon:'sport', text:'🟢 Fotbal, kolo, hřiště, běh – dnes to vyjde.' });
+      const greenSport = [
+        '🟢 Fotbal, kolo, hřiště, běh – dnes to vyjde.',
+        '🟢 Jdi na brusle. S chráničema a helmou!'
+      ];
+      tips.push({ icon:'sport', text: greenSport[date.getDate() % greenSport.length] });
     }
   }
 
@@ -1308,14 +1312,14 @@ function renderTab() {
   holidayEl.textContent = dayName || '';
   holidayEl.style.display = dayName ? '' : 'none';
 
-  // Subtitle: special message > weekday variant > weekend fallback
+  // Subtitle: show only when a special-day message exists
   const subtitleEl = document.getElementById('hdr-subtitle');
   if (specialDay && specialDay.message) {
     subtitleEl.textContent = specialDay.message;
-  } else if (schoolDay) {
-    subtitleEl.textContent = getWeekdaySubtitle(displayDate);
+    subtitleEl.style.display = '';
   } else {
-    subtitleEl.textContent = 'Počasí na celý den';
+    subtitleEl.textContent = '';
+    subtitleEl.style.display = 'none';
   }
 
   // April Fools (today only, until user reveals)
@@ -1335,7 +1339,7 @@ function renderTab() {
   renderAirQuality(aqArr, schoolDay);
 
   const tipEl = document.getElementById('tip-section');
-  const tips  = getTip(slots, sunrise, aqArr);
+  const tips  = getTip(slots, sunrise, aqArr, displayDate);
   if (tips) {
     const lbl = isT ? 'Tipy na dnes' : 'Tipy na zítra';
     tipEl.style.display = 'block';
